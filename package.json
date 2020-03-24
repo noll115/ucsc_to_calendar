@@ -1,0 +1,18 @@
+{
+  "name": "ucsc_to_calendar",
+  "version": "1.0.0",
+  "description": "extract class times to be automatically put into google calendar",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "keywords": [
+    "ucsc",
+    "google",
+    "calendar",
+    "time",
+    "class"
+  ],
+  "author": "Noel Gomez",
+  "license": "ISC"
+}
