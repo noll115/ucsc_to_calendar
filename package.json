@@ -13,11 +13,13 @@
     "time",
     "class"
   ],
+  "repository": {"url": "https://github.com/noll115/ucsc_to_calendar"},
   "author": "Noel Gomez",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.19.2",
     "cheerio": "^1.0.0-rc.3",
+    "ical-generator": "^1.9.4",
     "puppeteer": "^2.1.1"
   }
 }
