@@ -8,19 +8,13 @@ const courseUrl = "https://pisa.ucsc.edu/class_search/index.php";
 
 
 
+async function GetClasses(page) {
 
-
-
-
-async function main() {
-    let browser = await puppeteer.launch({ headless: false });
-    let [page, _] = await browser.pages();
-    await page.goto(courseUrl);
     await page.select("#reg_status", "all");
     await page.click("input[type='submit']");
     let elem = await page.waitForSelector("[id='rec_dur']>[value='100']");
     await page.evaluate((elem) => {
-        elem.value = 10;
+        elem.value = 9999;
     }, elem);
     let s;
     page.on('response', async response => {
@@ -56,10 +50,64 @@ async function main() {
         classes[classDetails.number] = classDetails;
 
     });
-    await page.close();
+    return classes;
+}
 
-    console.log(classes);
-    
+
+
+
+async function main() {
+    let browser = await puppeteer.launch();
+    let page = (await browser.pages())[0];
+    await page.goto(courseUrl);
+    let elem = await page.$("#term_dropdown>option[selected='selected']")
+    let [quarterStr, quarterNum] = await page.evaluate(el => [el.textContent, el.value], elem);
+    let [year, quarterName, _] = quarterStr.split(" ");
+    // let classes = await GetClasses(page);
+    await page.goto(datesUrl);
+    let html = await page.evaluate(() => document.body.innerHTML);
+
+    let $ = cheerio.load(html,{
+        decodeEntities: false
+    });
+    let quarterStrRegex = new RegExp(`([A-Z]+) ([A-Z]+) (\\d+)`, "gi");
+    let holidayRegex = /holiday/gi;
+    let trSelect = $("#main tbody>tr");
+    let quarters = {};
+    trSelect.each((i, elem) => {
+        let elemStr = $(elem).text();
+        let tokens = quarterStrRegex.exec(elemStr);
+        if (tokens) {
+            let quarter = {};
+            quarter.name = tokens[1];
+            for (let index = i + 1; index < i + 6; index++) {
+                const element = trSelect.get(index);
+                let node = $(element);
+                let title = node.children("td:nth-child(1)").text().trim().split(" ");
+                let days = node.children("td:nth-child(2)").html().match("<p>(.+)<br>")[1];
+
+                if (title.length == 1) {
+                    console.log(days);
+                    quarter[title[0]] = days.split(", ");
+                } else {
+                    console.log(title);
+
+                    quarter[title[0]] = quarter[title[0]] || {};
+                    quarter[title[0]][title[1]] = days
+                }
+
+                // console.log(title)
+                // console.log(days);
+
+
+                console.log();
+            }
+            quarters[quarter.name] = quarter;
+        }
+    });
+    console.log(quarters);
+
+    await browser.close();
 }
 
 
