@@ -79,7 +79,7 @@ async function main() {
         let tokens = quarterStrRegex.exec(elemStr);
         if (tokens) {
             let quarter = {};
-            quarter.name = tokens[1];
+            quarter.name = elemStr.trim();
             for (let index = i + 1; index < i + 6; index++) {
                 const element = trSelect.get(index);
                 let node = $(element);
@@ -87,22 +87,13 @@ async function main() {
                 let days = node.children("td:nth-child(2)").html().match("<p>(.+)<br>")[1];
 
                 if (title.length == 1) {
-                    console.log(days);
                     quarter[title[0]] = days.split(", ");
                 } else {
-                    console.log(title);
-
                     quarter[title[0]] = quarter[title[0]] || {};
                     quarter[title[0]][title[1]] = days
                 }
-
-                // console.log(title)
-                // console.log(days);
-
-
-                console.log();
             }
-            quarters[quarter.name] = quarter;
+            quarters[tokens[1]] = quarter;
         }
     });
     console.log(quarters);
