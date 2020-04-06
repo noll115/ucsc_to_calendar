@@ -3,29 +3,40 @@ const puppeteer = require("puppeteer");
 const axios = require("axios").default;
 
 
-const datesUrl = "https://registrar.ucsc.edu/calendar/key-dates/index.html";
+const keyDatesURL = "https://registrar.ucsc.edu/calendar/key-dates/index.html";
 const courseUrl = "https://pisa.ucsc.edu/class_search/index.php";
 
 
 
-async function GetClasses(page) {
-
-    await page.select("#reg_status", "all");
-    await page.click("input[type='submit']");
-    let elem = await page.waitForSelector("[id='rec_dur']>[value='100']");
-    await page.evaluate((elem) => {
-        elem.value = 9999;
-    }, elem);
-    let s;
-    page.on('response', async response => {
-        if (response.url().endsWith("/index.php")) {
-            console.log("response code: ", response.status());
-            s = response;
-        }
+async function GetClasses(quarterNum) {
+    const params = new URLSearchParams({
+        "action": "results",
+        "binds[:term]": quarterNum,
+        "binds[:reg_status]": "all",
+        "binds[:subject]": "",
+        "binds[:catalog_nbr_op]": "=",
+        "binds[:catalog_nbr]": "",
+        "binds[:title]": "",
+        "binds[:instr_name_op]": "=",
+        "binds[:instructor]": "",
+        "binds[:ge]": "",
+        "binds[:crse_units_op]": "=",
+        "binds[:crse_units_from]": "",
+        "binds[:crse_units_to]": "",
+        "binds[:crse_units_exact]": "",
+        "binds[:days]": "",
+        "binds[:times]": "",
+        "binds[:acad_career]": "",
+        "rec_start": 0,
+        "rec_dur": 9999
     });
-    await page.select("#rec_dur", "9999");
-    let p = await s.text();
-    let $ = cheerio.load(p);
+    let { data: html } = await axios({
+        method: "POST",
+        url: courseUrl,
+        data: params
+    });
+
+    let $ = cheerio.load(html);
     let classes = {};
 
     $("[id^='rowpanel']").each((i, elem) => {
@@ -80,40 +91,31 @@ function ParseDates(days) {
     return result || days;
 }
 
-
-async function main() {
-    let browser = await puppeteer.launch();
-    let page = (await browser.pages())[0];
-    await page.goto(courseUrl);
-    let elem = await page.$("#term_dropdown>option[selected='selected']")
-    let [quarterStr, quarterNum] = await page.evaluate(el => [el.textContent, el.value], elem);
-    let [year, quarterName, _] = quarterStr.split(" ");
-    // let classes = await GetClasses(page);
-    await page.goto(datesUrl);
-    let html = await page.evaluate(() => document.body.innerHTML);
-
-    let $ = cheerio.load(html, {
+async function ObtainQuarterDates() {
+    let { data: keyDatesHTML } = await axios({
+        method: "GET",
+        url: keyDatesURL
+    });
+    let $ = cheerio.load(keyDatesHTML, {
         decodeEntities: false
     });
     let quarterStrRegex = new RegExp(`([A-Z]+) ([A-Z]+) (\\d+)`, "gi");
-    let holidayRegex = /holiday/gi;
-    let trSelect = $("#main tbody>tr");
+    let trSelect = $("#main tbody>tr").toArray();
     let quarters = {};
-    trSelect.each((i, elem) => {
-        let elemStr = $(elem).text();
+    for (let i = 0; i < trSelect.length; i++) {
+        let elemStr = $(trSelect[i]).text();
         let tokens = quarterStrRegex.exec(elemStr);
         if (tokens) {
             let quarter = {};
             quarter.name = elemStr.trim();
-            for (let index = i + 1; index < Math.min(i + 7, trSelect.length); index++) {
-                const element = trSelect.get(index);
-
-                let node = $(element);
+            let lastElemIndex = i + 7;
+            for (i += 1; i < Math.min(lastElemIndex, trSelect.length); i++) {
+                let node = $(trSelect[i]);
                 let title = node.children("td:nth-child(1)").text().trim().split(" ");
                 let dates = node.children("td:nth-child(2)").html().match("<p>(.+)<br>")[1].trim().split(", ");
+
                 dates = ParseDates(dates);
                 if (title.length == 1) {
-
                     quarter[title[0]] = dates;
                 } else {
                     if (title.includes("Final")) {
@@ -126,15 +128,31 @@ async function main() {
             }
             quarters[tokens[1]] = quarter;
         }
-    });
-    console.log(JSON.stringify(quarters, null, 2));
+    }
+    return quarters;
+}
 
-    await browser.close();
+
+async function main() {
+    let { data: coursePageHTML } = await axios({
+        method: "GET",
+        url: courseUrl
+    });
+
+    let page = cheerio.load(coursePageHTML);
+    let quarterElem = page("#term_dropdown>option[selected='selected']");
+    let quarterNum = quarterElem.attr("value");
+    let [year, quarterName, _] = quarterElem.text().split(" ");
+
+    let quarters = await ObtainQuarterDates();
+    let classes = await GetClasses(quarterNum);
+
 }
 
 
 try {
     main();
+
 
 } catch (error) {
     console.log(error);
