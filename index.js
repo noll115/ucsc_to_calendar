@@ -53,7 +53,32 @@ async function GetClasses(page) {
     return classes;
 }
 
+function ParseDates(days) {
+    let result = null;
+    days.forEach((day, i) => {
 
+        if (day.includes("–")) {
+            let [month, dates] = day.split(" ");
+            let [from, to] = dates.split("–").map(num => Number(num));
+            result = [];
+            for (let i = from; i < to; i++) {
+                result.push(`${month} ${i}`);
+            }
+        }
+        else if (/[A-Z]+ \d+/gi.test(day) && /^\d+$/.test(days[i + 1])) {
+            result = result || [];
+            result.push(day);
+            let [month, dateNum] = day.split(" ");
+            let index = i + 1;
+            let currStr = days[index];
+            while (/^\d+$/.test(currStr)) {
+                result.push(`${month} ${currStr}`);
+                currStr = days[++index]
+            }
+        }
+    })
+    return result || days;
+}
 
 
 async function main() {
@@ -67,7 +92,7 @@ async function main() {
     await page.goto(datesUrl);
     let html = await page.evaluate(() => document.body.innerHTML);
 
-    let $ = cheerio.load(html,{
+    let $ = cheerio.load(html, {
         decodeEntities: false
     });
     let quarterStrRegex = new RegExp(`([A-Z]+) ([A-Z]+) (\\d+)`, "gi");
@@ -80,23 +105,29 @@ async function main() {
         if (tokens) {
             let quarter = {};
             quarter.name = elemStr.trim();
-            for (let index = i + 1; index < i + 6; index++) {
+            for (let index = i + 1; index < Math.min(i + 7, trSelect.length); index++) {
                 const element = trSelect.get(index);
+
                 let node = $(element);
                 let title = node.children("td:nth-child(1)").text().trim().split(" ");
-                let days = node.children("td:nth-child(2)").html().match("<p>(.+)<br>")[1];
-
+                let dates = node.children("td:nth-child(2)").html().match("<p>(.+)<br>")[1].trim().split(", ");
+                dates = ParseDates(dates);
                 if (title.length == 1) {
-                    quarter[title[0]] = days.split(", ");
+
+                    quarter[title[0]] = dates;
                 } else {
-                    quarter[title[0]] = quarter[title[0]] || {};
-                    quarter[title[0]][title[1]] = days
+                    if (title.includes("Final")) {
+                        quarter["Finals"] = dates;
+                    } else {
+                        quarter[title[0]] = quarter[title[0]] || {};
+                        quarter[title[0]][title[1]] = dates
+                    }
                 }
             }
             quarters[tokens[1]] = quarter;
         }
     });
-    console.log(quarters);
+    console.log(JSON.stringify(quarters, null, 2));
 
     await browser.close();
 }
