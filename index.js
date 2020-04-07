@@ -1,11 +1,21 @@
 const cheerio = require("cheerio");
-const puppeteer = require("puppeteer");
 const axios = require("axios").default;
-
+const ical = require("ical-generator");
 
 const keyDatesURL = "https://registrar.ucsc.edu/calendar/key-dates/index.html";
 const courseUrl = "https://pisa.ucsc.edu/class_search/index.php";
 
+
+function translateDaysToIcal(daysStr) {
+    const possibilities = ["M", "Tu", "W", "Th", "F", "Sa"];
+    const iCalDates = ["mo", "tu", "we", "th", "fr", "sa", "su"];
+    let days = [];
+    possibilities.forEach((day, i) => {
+        if (daysStr.includes(day))
+            days.push(iCalDates[i]);
+    });
+    return days;
+}
 
 
 async function GetClasses(quarterNum) {
@@ -45,18 +55,31 @@ async function GetClasses(quarterNum) {
         if (classTimeInfo.includes("Cancelled")) {
             return true;
         }
+
+        let classLocStr = $("div:nth-child(1)", classInfo).text();
+
         let classDetails = {
             name: $("[id^='class_id_']", elem).text().replace(/\u00A0+/g, ' '),
             number: $("[id^='class_nbr_']", elem).text(),
+            meetings: [],
+            location: classLocStr.substr(classLocStr.lastIndexOf(":") + 2)
         };
-        let classLoc = $("div:nth-child(1)", classInfo).text();
-        classDetails.location = classLoc.substr(classLoc.lastIndexOf(":") + 2);
+
         if (classTimeInfo.includes("TBA")) {
-            classDetails.days = "TBA";
-            classDetails.time = "TBA";
+            classDetails.meetings.push({ days: "TBA", time: "TBA" });
         }
         else {
-            [classDetails.days, classDetails.time] = classTimeInfo.substr(classTimeInfo.indexOf(":") + 2).trim().split(" ");
+            let str = classTimeInfo.substr(classTimeInfo.indexOf(":") + 2).trim().replace(/\s{2,}/gi, " ").split(" ");
+
+            for (let i = 0; i < str.length; i += 2) {
+                let meeting = {
+                    days: translateDaysToIcal(str[i]),
+                    time: str[i + 1]
+                }
+                classDetails.meetings.push(meeting);
+            }
+
+
         }
         classes[classDetails.number] = classDetails;
 
@@ -142,10 +165,24 @@ async function main() {
     let page = cheerio.load(coursePageHTML);
     let quarterElem = page("#term_dropdown>option[selected='selected']");
     let quarterNum = quarterElem.attr("value");
-    let [year, quarterName, _] = quarterElem.text().split(" ");
+    let [year, currentQuarter, _] = quarterElem.text().split(" ");
 
-    let quarters = await ObtainQuarterDates();
+    // let quarters = await ObtainQuarterDates();
     let classes = await GetClasses(quarterNum);
+    let cal = ical({ domain: "ucsc-cal.com", name: "ucsc" });
+    let date = new Date();
+    let event = cal.createEvent({
+        start: date,
+        summary: "YES",
+        location: "house",
+
+    })
+    // console.log(event);
+
+    console.log(JSON.stringify(classes[62801], null, 2));
+    console.log(JSON.stringify(classes[63787], null, 2));
+
+
 
 }
 
