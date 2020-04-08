@@ -59,7 +59,7 @@ async function GetClasses(quarterNum) {
         let classLocStr = $("div:nth-child(1)", classInfo).text();
 
         let classDetails = {
-            name: $("[id^='class_id_']", elem).text().replace(/\u00A0+/g, ' '),
+            name: $("[id^='class_id_']", elem).text().replace(/\u00A0+/, ' '),
             number: $("[id^='class_nbr_']", elem).text(),
             meetings: [],
             location: classLocStr.substr(classLocStr.lastIndexOf(":") + 2)
@@ -69,7 +69,7 @@ async function GetClasses(quarterNum) {
             classDetails.meetings.push({ days: "TBA", time: "TBA" });
         }
         else {
-            let str = classTimeInfo.substr(classTimeInfo.indexOf(":") + 2).trim().replace(/\s{2,}/gi, " ").split(" ");
+            let str = classTimeInfo.substr(classTimeInfo.indexOf(":") + 2).trim().replace(/\s{2,}/i, " ").split(" ");
 
             for (let i = 0; i < str.length; i += 2) {
                 let meeting = {
@@ -87,8 +87,53 @@ async function GetClasses(quarterNum) {
     return classes;
 }
 
+async function ObtainLabData(quarterNum, classNum) {
+    let labsAvailable = {};
+    let { data: html } = await axios({
+        method: "POST",
+        url: courseUrl,
+        data: new URLSearchParams({
+            "action": "detail",
+            "class_data[:STRM]": quarterNum,
+            "class_data[:CLASS_NBR]": classNum
+        })
+    });
+    let $ = cheerio.load(html);
+    let [title, labPanel] = $("div.panel.panel-default.row").last().children().toArray();
+    let labs = $(labPanel).children();
+
+    if ($(title).text().includes("Sections or Labs")) {
+        let labType = null;
+        let labTitleRegex = /#(\d+) (\w+) (\w+)/
+        $(labs).each((i, lab) => {
+
+            let labInfo = $(lab).children().toArray();
+            let [days, time] = $(labInfo[1]).text().split(" ");
+            if (days.includes("Cancelled"))
+                return true;
+            let [, labNum, type, section] = $(labInfo[0]).text().match(labTitleRegex);
+            let [, location] = $(labInfo[3]).text().split(": ");
+            labType = labType || type;
+            let labDetail = {
+                labNum,
+                section,
+                days: translateDaysToIcal(days),
+                time,
+                loc: location
+            }
+            labsAvailable[labNum] = labDetail;
+        })
+        labsAvailable.labType = labType;
+    }
+    console.log(labsAvailable);
+    
+    return labsAvailable;
+}
+
 function ParseDates(days) {
     let result = null;
+    let dateFormat = new RegExp(/[A-Z]+ \d+/, "gi");
+    let numbers = new RegExp(/^\d+$/);
     days.forEach((day, i) => {
 
         if (day.includes("–")) {
@@ -99,13 +144,13 @@ function ParseDates(days) {
                 result.push(`${month} ${i}`);
             }
         }
-        else if (/[A-Z]+ \d+/gi.test(day) && /^\d+$/.test(days[i + 1])) {
+        else if (dateFormat.test(day) && numbers.test(days[i + 1])) {
             result = result || [];
             result.push(day);
             let [month, dateNum] = day.split(" ");
             let index = i + 1;
             let currStr = days[index];
-            while (/^\d+$/.test(currStr)) {
+            while (numbers.test(currStr)) {
                 result.push(`${month} ${currStr}`);
                 currStr = days[++index]
             }
@@ -180,7 +225,10 @@ async function main() {
     // console.log(event);
 
     console.log(JSON.stringify(classes[62801], null, 2));
-    console.log(JSON.stringify(classes[63787], null, 2));
+    console.log(JSON.stringify(classes[62602], null, 2));
+    console.log();
+    ObtainLabData(quarterNum, 63856)
+
 
 
 
