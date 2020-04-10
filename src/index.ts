@@ -2,14 +2,17 @@ import cheerio from 'cheerio';
 import axios from 'axios'
 import ical from "ical-generator";
 
+import { Courses, Course, Labs, Lab, Meeting } from "./models/course-data";
+import { Quarter, QuarterSeasons } from "./models/quarter-data";
+
 const keyDatesURL = "https://registrar.ucsc.edu/calendar/key-dates/index.html";
 const courseUrl = "https://pisa.ucsc.edu/class_search/index.php";
 
 
-function translateDaysToIcal(daysStr) {
+function translateDaysToIcal(daysStr: string): string[] {
     const possibilities = ["M", "Tu", "W", "Th", "F", "Sa"];
     const iCalDates = ["mo", "tu", "we", "th", "fr", "sa", "su"];
-    let days = [];
+    let days: string[] = [];
     possibilities.forEach((day, i) => {
         if (daysStr.includes(day))
             days.push(iCalDates[i]);
@@ -17,23 +20,24 @@ function translateDaysToIcal(daysStr) {
     return days;
 }
 
-async function ObtainLabData(quarterNum, classNum) {
-    let labsAvailable = {};
+async function ObtainLabData(quarterNum: number, classNum: number): Promise<Labs> {
+    let labsAvailable: Labs = { type: '' };
+    let query: Record<string, string> = {
+        "action": "detail",
+        "class_data[:STRM]": quarterNum.toString(),
+        "class_data[:CLASS_NBR]": classNum.toString()
+    }
+
     let { data: html } = await axios({
         method: "POST",
         url: courseUrl,
-        data: new URLSearchParams({
-            "action": "detail",
-            "class_data[:STRM]": quarterNum,
-            "class_data[:CLASS_NBR]": classNum
-        })
+        data: new URLSearchParams(query)
     });
     let $ = cheerio.load(html);
     let [title, labPanel] = $("div.panel.panel-default.row").last().children().toArray();
     let labs = $(labPanel).children();
 
     if ($(title).text().includes("Sections or Labs")) {
-        let labType = null;
         let labTitleRegex = /#(\d+) (\w+) (\w+)/
         $(labs).each((i, lab) => {
 
@@ -43,27 +47,29 @@ async function ObtainLabData(quarterNum, classNum) {
                 return true;
             let [, labNum, type, section] = $(labInfo[0]).text().match(labTitleRegex);
             let [, location] = $(labInfo[3]).text().split(": ");
-            labType = labType || type;
-            let labDetail = {
-                labNum,
-                section,
-                days: translateDaysToIcal(days),
-                time,
+            labsAvailable.type = labsAvailable.type || type;
+            let labDetail: Lab = {
+                num: parseInt(labNum),
+                sect: section,
+                meet: {
+                    days: translateDaysToIcal(days),
+                    time
+                },
                 loc: location
             }
-            labsAvailable[labNum] = labDetail;
+            labsAvailable[labDetail.num] = labDetail;
         })
-        labsAvailable.labType = labType;
     }
 
     return labsAvailable;
 }
 
 
-async function GetClasses(quarterNum) {
-    const params = new URLSearchParams({
+
+async function GetClasses(quarterNum: number): Promise<Courses> {
+    const query: Record<string, string> = {
         "action": "results",
-        "binds[:term]": quarterNum,
+        "binds[:term]": quarterNum.toString(),
         "binds[:reg_status]": "all",
         "binds[:subject]": "",
         "binds[:catalog_nbr_op]": "=",
@@ -79,17 +85,18 @@ async function GetClasses(quarterNum) {
         "binds[:days]": "",
         "binds[:times]": "",
         "binds[:acad_career]": "",
-        "rec_start": 0,
-        "rec_dur": 9999
-    });
+        "rec_start": "0",
+        "rec_dur": "9999"
+    }
+    const data = new URLSearchParams(query);
     let { data: html } = await axios({
         method: "POST",
         url: courseUrl,
-        data: params
+        data
     });
 
     let $ = cheerio.load(html);
-    let classes = {};
+    let courses: Courses = {};
 
     $("[id^='rowpanel']").each(async (i, elem) => {
         let classInfo = $("div.panel-body>div.row div:nth-child(3)", elem);
@@ -99,67 +106,69 @@ async function GetClasses(quarterNum) {
         }
 
         let classLocStr = $("div:nth-child(1)", classInfo).text();
-
-        let classDetails = {
+        let courseNum = parseInt($("[id^='class_nbr_']", elem).text());
+        let courseDetails: Course = {
             name: $("[id^='class_id_']", elem).text().replace(/\u00A0+/, ' '),
-            number: $("[id^='class_nbr_']", elem).text(),
-            meetings: [],
-            location: classLocStr.substr(classLocStr.lastIndexOf(":") + 2),
+            num: courseNum,
+            meets: [],
+            loc: classLocStr.substr(classLocStr.lastIndexOf(":") + 2),
+            labs: null
         };
+
         if (classTimeInfo.includes("TBA")) {
-            classDetails.meetings.push({ days: "TBA", time: "TBA" });
+            courseDetails.meets.push({ days: ["TBA"], time: "TBA" });
         }
         else {
             let str = classTimeInfo.substr(classTimeInfo.indexOf(":") + 2).trim().replace(/\s{2,}/i, " ").split(" ");
 
             for (let i = 0; i < str.length; i += 2) {
-                let meeting = {
+                let meeting: Meeting = {
                     days: translateDaysToIcal(str[i]),
                     time: str[i + 1]
                 }
-                classDetails.meetings.push(meeting);
+                courseDetails.meets.push(meeting);
             }
-
-
         }
-        classes[classDetails.number] = classDetails;
+        courses[courseDetails.num] = courseDetails;
 
     });
-    return classes;
+    return courses;
 }
 
 
 
-function ParseDates(days) {
-    let result = null;
-    let dateFormat = new RegExp(/[A-Z]+ \d+/, "gi");
-    let numbers = new RegExp(/^\d+$/);
+function ParseDates(days: string[], year: string): Date[] {
+    let result: Date[] = [];
+    const inDateFormat = new RegExp(/[A-Z]+ \d+/i);
+    const isNum = new RegExp(/^\d+$/);
     days.forEach((day, i) => {
 
+        // if ["December 09-13"]
         if (day.includes("–")) {
             let [month, dates] = day.split(" ");
             let [from, to] = dates.split("–").map(num => Number(num));
-            result = [];
             for (let i = from; i < to; i++) {
-                result.push(`${month} ${i}`);
+                result.push(new Date(`${month} ${i} ${year}`));
             }
         }
-        else if (dateFormat.test(day) && numbers.test(days[i + 1])) {
-            result = result || [];
-            result.push(day);
+        // if ["December 09","3","4"]
+        else if (inDateFormat.test(day) && isNum.test(days[i + 1])) {
             let [month, dateNum] = day.split(" ");
+            result.push(new Date(`${month} ${dateNum} ${year}`));
             let index = i + 1;
             let currStr = days[index];
-            while (numbers.test(currStr)) {
-                result.push(`${month} ${currStr}`);
+            while (isNum.test(currStr)) {
+                result.push(new Date(`${month} ${currStr} ${year}`));
                 currStr = days[++index]
             }
+        } else if (inDateFormat.test(day)) {
+            result.push(new Date(`${day} ${year}`))
         }
     })
-    return result || days;
+    return result;
 }
 
-async function ObtainQuarterDates() {
+async function ObtainQuarterDates(): Promise<{ [index: string]: Quarter }> {
     let { data: keyDatesHTML } = await axios({
         method: "GET",
         url: keyDatesURL
@@ -169,32 +178,37 @@ async function ObtainQuarterDates() {
     });
     let quarterStrRegex = new RegExp(`([A-Z]+) ([A-Z]+) (\\d+)`, "gi");
     let trSelect = $("#main tbody>tr").toArray();
-    let quarters = {};
+    let quarters: { [index: string]: Quarter } = {};
     for (let i = 0; i < trSelect.length; i++) {
         let elemStr = $(trSelect[i]).text();
         let tokens = quarterStrRegex.exec(elemStr);
         if (tokens) {
-            let quarter = {};
-            quarter.name = elemStr.trim();
+            let [, season, , year,] = tokens;
+            let quarter: Quarter = {
+                name: elemStr.trim(),
+                finals: [],
+                holidays: [],
+                instruction: { begins: null, ends: null },
+                quarter: { begins: null, ends: null }
+            };
             let lastElemIndex = i + 7;
             for (i += 1; i < Math.min(lastElemIndex, trSelect.length); i++) {
                 let node = $(trSelect[i]);
                 let title = node.children("td:nth-child(1)").text().trim().split(" ");
                 let dates = node.children("td:nth-child(2)").html().match("<p>(.+)<br>")[1].trim().split(", ");
 
-                dates = ParseDates(dates);
+                let parsedDates = ParseDates(dates, year);
                 if (title.length == 1) {
-                    quarter[title[0]] = dates;
+                    quarter["holidays"] = parsedDates;
                 } else {
                     if (title.includes("Final")) {
-                        quarter["Finals"] = dates;
+                        quarter["finals"] = parsedDates;
                     } else {
-                        quarter[title[0]] = quarter[title[0]] || {};
-                        quarter[title[0]][title[1]] = dates
+                        quarter[title[0].toLowerCase()][title[1].toLowerCase()] = parsedDates
                     }
                 }
             }
-            quarters[tokens[1]] = quarter;
+            quarters[season] = quarter;
         }
     }
     return quarters;
@@ -209,12 +223,10 @@ async function main() {
 
     let page = cheerio.load(coursePageHTML);
     let quarterElem = page("#term_dropdown>option[selected='selected']");
-    let quarterNum = quarterElem.attr("value");
+    let quarterNum = parseInt(quarterElem.attr("value"));
     let [year, currentQuarter, _] = quarterElem.text().split(" ");
 
     let quarters = await ObtainQuarterDates();
-    console.log(quarterNum);
-
     let classes = await GetClasses(quarterNum);
     let cal = ical({ domain: "ucsc-cal.com", name: "ucsc" });
     let date = new Date();
@@ -224,10 +236,9 @@ async function main() {
         location: "house",
 
     })
-    let labs = await ObtainLabData(quarterNum, 62602)
-    console.log(labs);
 
-    console.log(classes[62602]);
+    console.log(JSON.stringify(classes[62602], null, 4));
+
 
 
 
