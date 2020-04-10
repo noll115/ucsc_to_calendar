@@ -1,6 +1,6 @@
-const cheerio = require("cheerio");
-const axios = require("axios").default;
-const ical = require("ical-generator");
+import cheerio from 'cheerio';
+import axios from 'axios'
+import ical from "ical-generator";
 
 const keyDatesURL = "https://registrar.ucsc.edu/calendar/key-dates/index.html";
 const courseUrl = "https://pisa.ucsc.edu/class_search/index.php";
@@ -15,76 +15,6 @@ function translateDaysToIcal(daysStr) {
             days.push(iCalDates[i]);
     });
     return days;
-}
-
-
-async function GetClasses(quarterNum) {
-    const params = new URLSearchParams({
-        "action": "results",
-        "binds[:term]": quarterNum,
-        "binds[:reg_status]": "all",
-        "binds[:subject]": "",
-        "binds[:catalog_nbr_op]": "=",
-        "binds[:catalog_nbr]": "",
-        "binds[:title]": "",
-        "binds[:instr_name_op]": "=",
-        "binds[:instructor]": "",
-        "binds[:ge]": "",
-        "binds[:crse_units_op]": "=",
-        "binds[:crse_units_from]": "",
-        "binds[:crse_units_to]": "",
-        "binds[:crse_units_exact]": "",
-        "binds[:days]": "",
-        "binds[:times]": "",
-        "binds[:acad_career]": "",
-        "rec_start": 0,
-        "rec_dur": 9999
-    });
-    let { data: html } = await axios({
-        method: "POST",
-        url: courseUrl,
-        data: params
-    });
-
-    let $ = cheerio.load(html);
-    let classes = {};
-
-    $("[id^='rowpanel']").each((i, elem) => {
-        let classInfo = $("div.panel-body>div.row div:nth-child(3)", elem);
-        let classTimeInfo = $("div:nth-child(2)", classInfo).text();
-        if (classTimeInfo.includes("Cancelled")) {
-            return true;
-        }
-
-        let classLocStr = $("div:nth-child(1)", classInfo).text();
-
-        let classDetails = {
-            name: $("[id^='class_id_']", elem).text().replace(/\u00A0+/, ' '),
-            number: $("[id^='class_nbr_']", elem).text(),
-            meetings: [],
-            location: classLocStr.substr(classLocStr.lastIndexOf(":") + 2)
-        };
-
-        if (classTimeInfo.includes("TBA")) {
-            classDetails.meetings.push({ days: "TBA", time: "TBA" });
-        }
-        else {
-            let str = classTimeInfo.substr(classTimeInfo.indexOf(":") + 2).trim().replace(/\s{2,}/i, " ").split(" ");
-
-            for (let i = 0; i < str.length; i += 2) {
-                let meeting = {
-                    days: translateDaysToIcal(str[i]),
-                    time: str[i + 1]
-                }
-                classDetails.meetings.push(meeting);
-            }
-
-
-        }
-        classes[classDetails.number] = classDetails;
-
-    });
-    return classes;
 }
 
 async function ObtainLabData(quarterNum, classNum) {
@@ -125,10 +55,80 @@ async function ObtainLabData(quarterNum, classNum) {
         })
         labsAvailable.labType = labType;
     }
-    console.log(labsAvailable);
-    
+
     return labsAvailable;
 }
+
+
+async function GetClasses(quarterNum) {
+    const params = new URLSearchParams({
+        "action": "results",
+        "binds[:term]": quarterNum,
+        "binds[:reg_status]": "all",
+        "binds[:subject]": "",
+        "binds[:catalog_nbr_op]": "=",
+        "binds[:catalog_nbr]": "",
+        "binds[:title]": "",
+        "binds[:instr_name_op]": "=",
+        "binds[:instructor]": "",
+        "binds[:ge]": "",
+        "binds[:crse_units_op]": "=",
+        "binds[:crse_units_from]": "",
+        "binds[:crse_units_to]": "",
+        "binds[:crse_units_exact]": "",
+        "binds[:days]": "",
+        "binds[:times]": "",
+        "binds[:acad_career]": "",
+        "rec_start": 0,
+        "rec_dur": 9999
+    });
+    let { data: html } = await axios({
+        method: "POST",
+        url: courseUrl,
+        data: params
+    });
+
+    let $ = cheerio.load(html);
+    let classes = {};
+
+    $("[id^='rowpanel']").each(async (i, elem) => {
+        let classInfo = $("div.panel-body>div.row div:nth-child(3)", elem);
+        let classTimeInfo = $("div:nth-child(2)", classInfo).text();
+        if (classTimeInfo.includes("Cancelled")) {
+            return true;
+        }
+
+        let classLocStr = $("div:nth-child(1)", classInfo).text();
+
+        let classDetails = {
+            name: $("[id^='class_id_']", elem).text().replace(/\u00A0+/, ' '),
+            number: $("[id^='class_nbr_']", elem).text(),
+            meetings: [],
+            location: classLocStr.substr(classLocStr.lastIndexOf(":") + 2),
+        };
+        if (classTimeInfo.includes("TBA")) {
+            classDetails.meetings.push({ days: "TBA", time: "TBA" });
+        }
+        else {
+            let str = classTimeInfo.substr(classTimeInfo.indexOf(":") + 2).trim().replace(/\s{2,}/i, " ").split(" ");
+
+            for (let i = 0; i < str.length; i += 2) {
+                let meeting = {
+                    days: translateDaysToIcal(str[i]),
+                    time: str[i + 1]
+                }
+                classDetails.meetings.push(meeting);
+            }
+
+
+        }
+        classes[classDetails.number] = classDetails;
+
+    });
+    return classes;
+}
+
+
 
 function ParseDates(days) {
     let result = null;
@@ -212,7 +212,9 @@ async function main() {
     let quarterNum = quarterElem.attr("value");
     let [year, currentQuarter, _] = quarterElem.text().split(" ");
 
-    // let quarters = await ObtainQuarterDates();
+    let quarters = await ObtainQuarterDates();
+    console.log(quarterNum);
+
     let classes = await GetClasses(quarterNum);
     let cal = ical({ domain: "ucsc-cal.com", name: "ucsc" });
     let date = new Date();
@@ -222,12 +224,12 @@ async function main() {
         location: "house",
 
     })
-    // console.log(event);
+    let labs = await ObtainLabData(quarterNum, 62602)
+    console.log(labs);
 
-    console.log(JSON.stringify(classes[62801], null, 2));
-    console.log(JSON.stringify(classes[62602], null, 2));
-    console.log();
-    ObtainLabData(quarterNum, 63856)
+    console.log(classes[62602]);
+
+
 
 
 
