@@ -1,21 +1,21 @@
 import cheerio from 'cheerio';
 import axios from 'axios'
-import ical from "ical-generator";
-
+import ical, { day } from "ical-generator";
+import { promises as fsPromise } from "fs";
 import { Courses, Course, Labs, Lab, Meeting } from "./models/course-data";
-import { Quarter, QuarterSeasons } from "./models/quarter-data";
+import { Quarter, Quarters, QuarterSeasons, KeyDates } from "./models/quarter-data";
 
 const keyDatesURL = "https://registrar.ucsc.edu/calendar/key-dates/index.html";
 const courseUrl = "https://pisa.ucsc.edu/class_search/index.php";
 
 
-function translateDaysToIcal(daysStr: string): string[] {
+function translateDaysToIcal(daysStr: string): day[] {
     const possibilities = ["M", "Tu", "W", "Th", "F", "Sa"];
-    const iCalDates = ["mo", "tu", "we", "th", "fr", "sa", "su"];
-    let days: string[] = [];
+    const iCalDates = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
+    let days: day[] = [];
     possibilities.forEach((day, i) => {
         if (daysStr.includes(day))
-            days.push(iCalDates[i]);
+            days.push(iCalDates[i] as day);
     });
     return days;
 }
@@ -67,6 +67,7 @@ async function ObtainLabData(quarterNum: number, classNum: number): Promise<Labs
 
 
 async function GetClasses(quarterNum: number): Promise<Courses> {
+
     const query: Record<string, string> = {
         "action": "results",
         "binds[:term]": quarterNum.toString(),
@@ -137,7 +138,7 @@ async function GetClasses(quarterNum: number): Promise<Courses> {
 
 
 
-function ParseDates(days: string[], year: string): Date[] {
+function ParseDates(days: string[], year: number): Date[] {
     let result: Date[] = [];
     const inDateFormat = new RegExp(/[A-Z]+ \d+/i);
     const isNum = new RegExp(/^\d+$/);
@@ -168,7 +169,34 @@ function ParseDates(days: string[], year: string): Date[] {
     return result;
 }
 
-async function ObtainQuarterDates(): Promise<{ [index: string]: Quarter }> {
+
+async function ObtainCurrentQuarters() {
+    let { data: coursePageHTML } = await axios({
+        method: "GET",
+        url: courseUrl
+    });
+
+    let page = cheerio.load(coursePageHTML);
+    let quarters: Quarters = {};
+    for (let i = 1; i < 3; i++) {
+        let quarterElem = page(`#term_dropdown>option:nth-child(${i})`);
+        let [year, season,] = quarterElem.text().split(" ");
+        let current = quarterElem.attr("selected")?.valueOf() !== undefined;
+        let quarter: Quarter = {
+            year: parseInt(year),
+            num: parseInt(quarterElem.attr("value")),
+            season: season.toLowerCase() as QuarterSeasons,
+            current,
+            keyDates: null
+        };
+        quarters[quarter.season] = quarter;
+    }
+    return quarters;
+}
+
+
+
+async function SetKeyDates(currentQuarters: Quarters) {
     let { data: keyDatesHTML } = await axios({
         method: "GET",
         url: keyDatesURL
@@ -176,83 +204,70 @@ async function ObtainQuarterDates(): Promise<{ [index: string]: Quarter }> {
     let $ = cheerio.load(keyDatesHTML, {
         decodeEntities: false
     });
-    let quarterStrRegex = new RegExp(`([A-Z]+) ([A-Z]+) (\\d+)`, "gi");
+    let quarterStrRegex = new RegExp(`([A-Z]+) [A-Z]+ \\d+`, "i");
     let trSelect = $("#main tbody>tr").toArray();
-    let quarters: { [index: string]: Quarter } = {};
     for (let i = 0; i < trSelect.length; i++) {
         let elemStr = $(trSelect[i]).text();
         let tokens = quarterStrRegex.exec(elemStr);
         if (tokens) {
-            let [, season, , year,] = tokens;
-            let quarter: Quarter = {
-                name: elemStr.trim(),
-                finals: [],
-                holidays: [],
-                instruction: { begins: null, ends: null },
-                quarter: { begins: null, ends: null }
-            };
-            let lastElemIndex = i + 7;
-            for (i += 1; i < Math.min(lastElemIndex, trSelect.length); i++) {
-                let node = $(trSelect[i]);
-                let title = node.children("td:nth-child(1)").text().trim().split(" ");
-                let dates = node.children("td:nth-child(2)").html().match("<p>(.+)<br>")[1].trim().split(", ");
+            let season = tokens[1].toLowerCase() as QuarterSeasons;
+            if (season in currentQuarters) {
 
-                let parsedDates = ParseDates(dates, year);
-                if (title.length == 1) {
-                    quarter["holidays"] = parsedDates;
-                } else {
-                    if (title.includes("Final")) {
-                        quarter["finals"] = parsedDates;
+                let quarter = currentQuarters[season];
+                let keyDates: KeyDates = {
+                    finals: [],
+                    holidays: [],
+                    instruction: { begins: null, ends: null },
+                    quarter: { begins: null, ends: null }
+                };
+                let lastElemIndex = i + 7;
+                for (i += 1; i < Math.min(lastElemIndex, trSelect.length); i++) {
+                    let node = $(trSelect[i]);
+                    let title = node.children("td:nth-child(1)").text().trim().split(" ");
+                    let dates = node.children("td:nth-child(2)").html().match("<p>(.+)<br>")[1].trim().split(", ");
+
+                    let parsedDates = ParseDates(dates, quarter.year);
+                    if (title.length == 1) {
+                        keyDates.holidays = parsedDates;
                     } else {
-                        quarter[title[0].toLowerCase()][title[1].toLowerCase()] = parsedDates
+                        if (title.includes("Final")) {
+                            keyDates.finals = parsedDates;
+                        } else {
+                            keyDates[title[0].toLowerCase()][title[1].toLowerCase()] = parsedDates
+                        }
                     }
                 }
+                quarter.keyDates = keyDates;
             }
-            quarters[season] = quarter;
         }
     }
-    return quarters;
 }
 
+
+async function GetQuarters(): Promise<Quarters> {
+    let currentQuarters = await ObtainCurrentQuarters();
+    await SetKeyDates(currentQuarters);
+    return currentQuarters;
+}
 
 async function main() {
-    let { data: coursePageHTML } = await axios({
-        method: "GET",
-        url: courseUrl
-    });
-
-    let page = cheerio.load(coursePageHTML);
-    let quarterElem = page("#term_dropdown>option[selected='selected']");
-    let quarterNum = parseInt(quarterElem.attr("value"));
-    let [year, currentQuarter, _] = quarterElem.text().split(" ");
-
-    let quarters = await ObtainQuarterDates();
-    let classes = await GetClasses(quarterNum);
+    let quarters = await GetQuarters();
+    let classes: Courses = JSON.parse(await fsPromise.readFile("./data/courses.json", { encoding: "utf-8" }));
+    let courseSelected = classes[62602];
+    let { keyDates } = quarters.spring;
     let cal = ical({ domain: "ucsc-cal.com", name: "ucsc" });
-    let date = new Date();
     let event = cal.createEvent({
-        start: date,
+        start: keyDates.instruction.begins,
         summary: "YES",
         location: "house",
-
+        end: keyDates.instruction.ends
+    });
+    event.repeating({
+        freq: "WEEKLY",
+        exclude: keyDates.holidays,
+        byDay: courseSelected.meets[0].days,
     })
-
-    console.log(JSON.stringify(classes[62602], null, 4));
-
-
-
-
-
-
-
 }
 
 
-try {
-    main();
-
-
-} catch (error) {
-    console.log(error);
-
-}
+main();

@@ -1,6 +1,7 @@
+import { day } from "ical-generator";
 
 interface Meeting {
-    days: string[],
+    days: day[],
     time: string
 };
 

@@ -1,5 +1,4 @@
-export interface Quarter {
-    name: string;
+export interface KeyDates {
     finals: Date[];
     holidays: Date[];
     instruction: {
@@ -13,6 +12,21 @@ export interface Quarter {
     [key: string]: any
 }
 
-export enum QuarterSeasons {
-    fall, winter, spring, summer
+
+export type QuarterSeasons = keyof Quarters;
+
+
+export interface Quarter {
+    year: number;
+    season: keyof Quarters;
+    num: number;
+    keyDates: KeyDates | null;
+    current: boolean
+}
+
+export interface Quarters {
+    fall?: Quarter;
+    winter?: Quarter;
+    spring?: Quarter;
+    summer?: Quarter;
 }

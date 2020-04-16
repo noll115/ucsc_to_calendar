@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const cheerio_1 = __importDefault(require("cheerio"));
 const axios_1 = __importDefault(require("axios"));
 const ical_generator_1 = __importDefault(require("ical-generator"));
+const fs_1 = require("fs");
 const keyDatesURL = "https://registrar.ucsc.edu/calendar/key-dates/index.html";
 const courseUrl = "https://pisa.ucsc.edu/class_search/index.php";
 function translateDaysToIcal(daysStr) {
@@ -114,7 +115,6 @@ function GetClasses(quarterNum) {
                 loc: classLocStr.substr(classLocStr.lastIndexOf(":") + 2),
                 labs: null
             };
-            courseDetails.labs = yield ObtainLabData(quarterNum, courseNum);
             if (classTimeInfo.includes("TBA")) {
                 courseDetails.meets.push({ days: ["TBA"], time: "TBA" });
             }
@@ -163,7 +163,32 @@ function ParseDates(days, year) {
     });
     return result;
 }
-function ObtainQuarterDates() {
+function ObtainCurrentQuarters() {
+    var _a;
+    return __awaiter(this, void 0, void 0, function* () {
+        let { data: coursePageHTML } = yield axios_1.default({
+            method: "GET",
+            url: courseUrl
+        });
+        let page = cheerio_1.default.load(coursePageHTML);
+        let quarters = {};
+        for (let i = 1; i < 3; i++) {
+            let quarterElem = page(`#term_dropdown>option:nth-child(${i})`);
+            let [year, season,] = quarterElem.text().split(" ");
+            let current = ((_a = quarterElem.attr("selected")) === null || _a === void 0 ? void 0 : _a.valueOf()) !== undefined;
+            let quarter = {
+                year: parseInt(year),
+                num: parseInt(quarterElem.attr("value")),
+                season: season.toLowerCase(),
+                current,
+                keyDates: null
+            };
+            quarters[quarter.season] = quarter;
+        }
+        return quarters;
+    });
+}
+function SetKeyDates(currentQuarters) {
     return __awaiter(this, void 0, void 0, function* () {
         let { data: keyDatesHTML } = yield axios_1.default({
             method: "GET",
@@ -172,71 +197,70 @@ function ObtainQuarterDates() {
         let $ = cheerio_1.default.load(keyDatesHTML, {
             decodeEntities: false
         });
-        let quarterStrRegex = new RegExp(`([A-Z]+) ([A-Z]+) (\\d+)`, "gi");
+        let quarterStrRegex = new RegExp(`([A-Z]+) [A-Z]+ \\d+`, "i");
         let trSelect = $("#main tbody>tr").toArray();
-        let quarters = {};
         for (let i = 0; i < trSelect.length; i++) {
             let elemStr = $(trSelect[i]).text();
             let tokens = quarterStrRegex.exec(elemStr);
             if (tokens) {
-                let [, season, , year,] = tokens;
-                let quarter = {
-                    name: elemStr.trim(),
-                    finals: [],
-                    holidays: [],
-                    instruction: { begins: null, ends: null },
-                    quarter: { begins: null, ends: null }
-                };
-                let lastElemIndex = i + 7;
-                for (i += 1; i < Math.min(lastElemIndex, trSelect.length); i++) {
-                    let node = $(trSelect[i]);
-                    let title = node.children("td:nth-child(1)").text().trim().split(" ");
-                    let dates = node.children("td:nth-child(2)").html().match("<p>(.+)<br>")[1].trim().split(", ");
-                    let parsedDates = ParseDates(dates, year);
-                    if (title.length == 1) {
-                        quarter["holidays"] = parsedDates;
-                    }
-                    else {
-                        if (title.includes("Final")) {
-                            quarter["finals"] = parsedDates;
+                let season = tokens[1].toLowerCase();
+                if (season in currentQuarters) {
+                    let quarter = currentQuarters[season];
+                    let keyDates = {
+                        finals: [],
+                        holidays: [],
+                        instruction: { begins: null, ends: null },
+                        quarter: { begins: null, ends: null }
+                    };
+                    let lastElemIndex = i + 7;
+                    for (i += 1; i < Math.min(lastElemIndex, trSelect.length); i++) {
+                        let node = $(trSelect[i]);
+                        let title = node.children("td:nth-child(1)").text().trim().split(" ");
+                        let dates = node.children("td:nth-child(2)").html().match("<p>(.+)<br>")[1].trim().split(", ");
+                        let parsedDates = ParseDates(dates, quarter.year);
+                        if (title.length == 1) {
+                            keyDates.holidays = parsedDates;
                         }
                         else {
-                            quarter[title[0].toLowerCase()][title[1].toLowerCase()] = parsedDates;
+                            if (title.includes("Final")) {
+                                keyDates.finals = parsedDates;
+                            }
+                            else {
+                                keyDates[title[0].toLowerCase()][title[1].toLowerCase()] = parsedDates;
+                            }
                         }
                     }
+                    quarter.keyDates = keyDates;
                 }
-                quarters[season] = quarter;
             }
         }
-        return quarters;
+    });
+}
+function GetQuarters() {
+    return __awaiter(this, void 0, void 0, function* () {
+        let currentQuarters = yield ObtainCurrentQuarters();
+        yield SetKeyDates(currentQuarters);
+        return currentQuarters;
     });
 }
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        let { data: coursePageHTML } = yield axios_1.default({
-            method: "GET",
-            url: courseUrl
-        });
-        let page = cheerio_1.default.load(coursePageHTML);
-        let quarterElem = page("#term_dropdown>option[selected='selected']");
-        let quarterNum = parseInt(quarterElem.attr("value"));
-        let [year, currentQuarter, _] = quarterElem.text().split(" ");
-        let quarters = yield ObtainQuarterDates();
-        let classes = yield GetClasses(quarterNum);
+        let quarters = yield GetQuarters();
+        let classes = JSON.parse(yield fs_1.promises.readFile("./data/courses.json", { encoding: "utf-8" }));
+        console.log(classes);
+        let { keyDates } = quarters.spring;
         let cal = ical_generator_1.default({ domain: "ucsc-cal.com", name: "ucsc" });
-        let date = new Date();
         let event = cal.createEvent({
-            start: date,
+            start: keyDates.instruction.begins,
             summary: "YES",
             location: "house",
+            end: keyDates.instruction.ends
         });
-        console.log(JSON.stringify(classes[62602], null, 4));
+        event.repeating({
+            freq: "WEEKLY",
+            exclude: keyDates.holidays,
+        });
     });
 }
-try {
-    main();
-}
-catch (error) {
-    console.log(error);
-}
+main();
 //# sourceMappingURL=index.js.map
