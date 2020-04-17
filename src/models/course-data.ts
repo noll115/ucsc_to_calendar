@@ -2,7 +2,8 @@ import { day } from "ical-generator";
 
 interface Meeting {
     days: day[],
-    time: string
+    start: string,
+    end: string
 };
 
 interface Lab {
@@ -22,6 +23,7 @@ interface Course {
     num: number,
     meets: Meeting[],
     loc: string,
+    TBA: boolean,
     labs: Labs | null
 };
 

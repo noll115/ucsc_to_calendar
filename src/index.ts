@@ -11,11 +11,11 @@ const courseUrl = "https://pisa.ucsc.edu/class_search/index.php";
 
 function translateDaysToIcal(daysStr: string): day[] {
     const possibilities = ["M", "Tu", "W", "Th", "F", "Sa"];
-    const iCalDates = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
+    const iCalDates: day[] = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
     let days: day[] = [];
     possibilities.forEach((day, i) => {
         if (daysStr.includes(day))
-            days.push(iCalDates[i] as day);
+            days.push(iCalDates[i]);
     });
     return days;
 }
@@ -48,12 +48,14 @@ async function ObtainLabData(quarterNum: number, classNum: number): Promise<Labs
             let [, labNum, type, section] = $(labInfo[0]).text().match(labTitleRegex);
             let [, location] = $(labInfo[3]).text().split(": ");
             labsAvailable.type = labsAvailable.type || type;
+            let [start, end] = time.split("-");
             let labDetail: Lab = {
                 num: parseInt(labNum),
                 sect: section,
                 meet: {
                     days: translateDaysToIcal(days),
-                    time
+                    start: localTo24Hrs(start),
+                    end: localTo24Hrs(end)
                 },
                 loc: location
             }
@@ -65,8 +67,28 @@ async function ObtainLabData(quarterNum: number, classNum: number): Promise<Labs
 }
 
 
+function localTo24Hrs(local: string) {
+    let timeRegex = new RegExp(/(\d{2}):(\d{2})(PM|AM)/);
+    let [, hours, minutes, period] = timeRegex.exec(local);
+    if (period === "PM") {
+        let convHrs = parseInt(hours) + 12;
+        return `${convHrs}:${minutes}`;
+    }
+    return `${hours}:${minutes}`;
+}
 
-async function GetClasses(quarterNum: number): Promise<Courses> {
+function firstDayInMonth(day: day, m: number, y: number, { start, end }: Meeting): Date[] {
+    let days = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+    let dayChosen = days.indexOf(day);
+    let [startHr, startMin] = start.split(":").map(str => parseInt(str));
+    let [endHr, endMin] = end.split(":").map(str => parseInt(str));
+    // day is in range 0 Sunday to 6 Saturday
+    let firstDay = 1 + (dayChosen - new Date(y, m, 1).getDay() + 7) % 7;
+    return [new Date(y, m, firstDay, startHr, startMin), new Date(y, m, firstDay, endHr, endMin)];
+}
+
+
+async function GetClasses(quarterNum: number, year: number): Promise<Courses> {
 
     const query: Record<string, string> = {
         "action": "results",
@@ -113,19 +135,22 @@ async function GetClasses(quarterNum: number): Promise<Courses> {
             num: courseNum,
             meets: [],
             loc: classLocStr.substr(classLocStr.lastIndexOf(":") + 2),
+            TBA: false,
             labs: null
         };
 
         if (classTimeInfo.includes("TBA")) {
-            courseDetails.meets.push({ days: ["TBA"], time: "TBA" });
+            courseDetails.TBA = true;
         }
         else {
             let str = classTimeInfo.substr(classTimeInfo.indexOf(":") + 2).trim().replace(/\s{2,}/i, " ").split(" ");
 
             for (let i = 0; i < str.length; i += 2) {
+                let [start, end] = str[i + 1].split("-");
                 let meeting: Meeting = {
                     days: translateDaysToIcal(str[i]),
-                    time: str[i + 1]
+                    start: localTo24Hrs(start),
+                    end: localTo24Hrs(end)
                 }
                 courseDetails.meets.push(meeting);
             }
@@ -233,7 +258,7 @@ async function SetKeyDates(currentQuarters: Quarters) {
                         if (title.includes("Final")) {
                             keyDates.finals = parsedDates;
                         } else {
-                            keyDates[title[0].toLowerCase()][title[1].toLowerCase()] = parsedDates
+                            keyDates[title[0].toLowerCase()][title[1].toLowerCase()] = parsedDates[0];
                         }
                     }
                 }
@@ -252,21 +277,37 @@ async function GetQuarters(): Promise<Quarters> {
 
 async function main() {
     let quarters = await GetQuarters();
-    let classes: Courses = JSON.parse(await fsPromise.readFile("./data/courses.json", { encoding: "utf-8" }));
+    let quarter = quarters.spring;
+    let classes: Courses = await GetClasses(quarter.num, quarter.year);
     let courseSelected = classes[62602];
     let { keyDates } = quarters.spring;
-    let cal = ical({ domain: "ucsc-cal.com", name: "ucsc" });
-    let event = cal.createEvent({
-        start: keyDates.instruction.begins,
-        summary: "YES",
-        location: "house",
-        end: keyDates.instruction.ends
-    });
-    event.repeating({
-        freq: "WEEKLY",
-        exclude: keyDates.holidays,
-        byDay: courseSelected.meets[0].days,
-    })
+    console.log(keyDates);
+    console.log(courseSelected);
+    console.log(courseSelected.meets);
+    let { meets } = courseSelected;
+    let { begins, ends } = keyDates.instruction;
+    let [startDate, endDate] = firstDayInMonth(meets[0].days[0], begins.getMonth(), quarter.year, meets[0]);
+    console.log(startDate.toLocaleString());
+    console.log(endDate.toLocaleString());
+    
+    // let cal = ical({ domain: "ucsc-cal.com", name: "ucsc" });
+    // let event = cal.createEvent({
+    //     start: startDate,
+    //     summary: courseSelected.name,
+    //     description: "",
+    //     location: courseSelected.loc,
+    //     end: endDate,
+    //     repeating: {
+    //         freq: "WEEKLY",
+    //         exclude: keyDates.holidays,
+    //         byDay: courseSelected.meets[0].days,
+    //         until: keyDates.instruction.ends
+    //     },
+    //     alarms:[],
+    // });
+    // console.log(cal.toJSON());
+    
+    // cal.saveSync("./cal")
 }
 
 
