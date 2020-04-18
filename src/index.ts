@@ -290,24 +290,25 @@ async function main() {
     console.log(startDate.toLocaleString());
     console.log(endDate.toLocaleString());
     
-    // let cal = ical({ domain: "ucsc-cal.com", name: "ucsc" });
-    // let event = cal.createEvent({
-    //     start: startDate,
-    //     summary: courseSelected.name,
-    //     description: "",
-    //     location: courseSelected.loc,
-    //     end: endDate,
-    //     repeating: {
-    //         freq: "WEEKLY",
-    //         exclude: keyDates.holidays,
-    //         byDay: courseSelected.meets[0].days,
-    //         until: keyDates.instruction.ends
-    //     },
-    //     alarms:[],
-    // });
-    // console.log(cal.toJSON());
+    let cal = ical({ domain: "ucsc-cal.com", name: "ucsc" });
+    let event = cal.createEvent({
+        timezone:"America/Los_Angeles",
+        start: startDate,
+        summary: courseSelected.name,
+        description: "",
+        location: courseSelected.loc,
+        end: endDate,
+        repeating: {
+            freq: "WEEKLY",
+            exclude: keyDates.holidays,
+            byDay: courseSelected.meets[0].days,
+            until: keyDates.instruction.ends
+        },
+        alarms:[],
+    });
+    console.log(cal.toJSON());
     
-    // cal.saveSync("./cal")
+    cal.saveSync("./cal.ics")
 }
 
 
