@@ -302,7 +302,7 @@ async function main() {
             freq: "WEEKLY",
             exclude: keyDates.holidays,
             byDay: courseSelected.meets[0].days,
-            until: keyDates.instruction.ends
+            until: ends
         },
         alarms:[],
     });
