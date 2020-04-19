@@ -9,7 +9,7 @@ interface Meeting {
 interface Lab {
     num: number,
     sect: string,
-    meet: Meeting,
+    meet: Meeting | "TBA",
     loc: string
 };
 
@@ -21,7 +21,7 @@ interface Labs {
 interface Course {
     name: string,
     num: number,
-    meets: Meeting[],
+    meets: Meeting[] | "TBA",
     loc: string,
     TBA: boolean,
     labs: Labs | null

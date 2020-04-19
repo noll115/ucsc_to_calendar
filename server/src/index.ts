@@ -6,7 +6,8 @@ import { Courses, Course, Labs, Lab, Meeting } from "./models/course-data";
 import { Quarter, Quarters, QuarterSeasons, KeyDates } from "./models/quarter-data";
 
 const keyDatesURL = "https://registrar.ucsc.edu/calendar/key-dates/index.html";
-const courseUrl = "https://pisa.ucsc.edu/class_search/index.php";
+const courseURL = "https://pisa.ucsc.edu/class_search/index.php";
+const finalURL = "https://registrar.ucsc.edu/soc/final-examinations.html"
 
 
 function translateDaysToIcal(daysStr: string): day[] {
@@ -20,48 +21,34 @@ function translateDaysToIcal(daysStr: string): day[] {
     return days;
 }
 
-async function ObtainLabData(quarterNum: number, classNum: number): Promise<Labs> {
+function ObtainLabData($: CheerioStatic, labPanel: CheerioElement): Labs {
     let labsAvailable: Labs = { type: '' };
-    let query: Record<string, string> = {
-        "action": "detail",
-        "class_data[:STRM]": quarterNum.toString(),
-        "class_data[:CLASS_NBR]": classNum.toString()
-    }
-
-    let { data: html } = await axios({
-        method: "POST",
-        url: courseUrl,
-        data: new URLSearchParams(query)
-    });
-    let $ = cheerio.load(html);
-    let [title, labPanel] = $("div.panel.panel-default.row").last().children().toArray();
     let labs = $(labPanel).children();
 
-    if ($(title).text().includes("Sections or Labs")) {
-        let labTitleRegex = /#(\d+) (\w+) (\w+)/
-        $(labs).each((i, lab) => {
+    let labTitleRegex = /#(\d+) (\w+) (\w+)/;
+    $(labs).each((i, lab) => {
 
-            let labInfo = $(lab).children().toArray();
-            let [days, time] = $(labInfo[1]).text().split(" ");
-            if (days.includes("Cancelled"))
-                return true;
-            let [, labNum, type, section] = $(labInfo[0]).text().match(labTitleRegex);
-            let [, location] = $(labInfo[3]).text().split(": ");
-            labsAvailable.type = labsAvailable.type || type;
-            let [start, end] = time.split("-");
-            let labDetail: Lab = {
-                num: parseInt(labNum),
-                sect: section,
-                meet: {
-                    days: translateDaysToIcal(days),
-                    start: localTo24Hrs(start),
-                    end: localTo24Hrs(end)
-                },
-                loc: location
-            }
-            labsAvailable[labDetail.num] = labDetail;
-        })
-    }
+        let labInfo = $(lab).children().toArray();
+        let [days, time] = $(labInfo[1]).text().split(" ");
+        if (days.includes("Cancelled"))
+            return true;
+
+        let [, labNum, type, section] = $(labInfo[0]).text().match(labTitleRegex);
+        let [, location] = $(labInfo[3]).text().split(": ");
+        labsAvailable.type = labsAvailable.type || type;
+        let [start, end] = time.split("-");
+        let labDetail: Lab = {
+            num: parseInt(labNum),
+            sect: section,
+            meet: days.includes("TBA") ? "TBA" : {
+                days: translateDaysToIcal(days),
+                start: localTo24Hrs(start),
+                end: localTo24Hrs(end)
+            },
+            loc: location
+        };
+        labsAvailable[labDetail.num] = labDetail;
+    })
 
     return labsAvailable;
 }
@@ -88,7 +75,7 @@ function firstDayInMonth(day: day, m: number, y: number, { start, end }: Meeting
 }
 
 
-async function GetClasses(quarterNum: number, year: number): Promise<Courses> {
+async function GetClasses(quarterNum: number, year: number): Promise<{ courseNums: number[], courseToNums: { [index: string]: number } }> {
 
     const query: Record<string, string> = {
         "action": "results",
@@ -114,12 +101,14 @@ async function GetClasses(quarterNum: number, year: number): Promise<Courses> {
     const data = new URLSearchParams(query);
     let { data: html } = await axios({
         method: "POST",
-        url: courseUrl,
+        url: courseURL,
         data
     });
 
     let $ = cheerio.load(html);
-    let courses: Courses = {};
+
+    let courseNums: number[] = [];
+    let courseToNums: { [index: string]: number } = {};
 
     $("[id^='rowpanel']").each(async (i, elem) => {
         let classInfo = $("div.panel-body>div.row div:nth-child(3)", elem);
@@ -127,38 +116,13 @@ async function GetClasses(quarterNum: number, year: number): Promise<Courses> {
         if (classTimeInfo.includes("Cancelled")) {
             return true;
         }
-
-        let classLocStr = $("div:nth-child(1)", classInfo).text();
         let courseNum = parseInt($("[id^='class_nbr_']", elem).text());
-        let courseDetails: Course = {
-            name: $("[id^='class_id_']", elem).text().replace(/\u00A0+/, ' '),
-            num: courseNum,
-            meets: [],
-            loc: classLocStr.substr(classLocStr.lastIndexOf(":") + 2),
-            TBA: false,
-            labs: null
-        };
-
-        if (classTimeInfo.includes("TBA")) {
-            courseDetails.TBA = true;
-        }
-        else {
-            let str = classTimeInfo.substr(classTimeInfo.indexOf(":") + 2).trim().replace(/\s{2,}/i, " ").split(" ");
-
-            for (let i = 0; i < str.length; i += 2) {
-                let [start, end] = str[i + 1].split("-");
-                let meeting: Meeting = {
-                    days: translateDaysToIcal(str[i]),
-                    start: localTo24Hrs(start),
-                    end: localTo24Hrs(end)
-                }
-                courseDetails.meets.push(meeting);
-            }
-        }
-        courses[courseDetails.num] = courseDetails;
+        let [, course, section, courseName] = $("[id^='class_id_']", elem).text().trim().match(/(\w+ .+) - (\d+)\s+(.+)/);
+        courseToNums[`${course} - ${section} ${courseName}`] = courseNum;
+        courseNums.push(courseNum);
 
     });
-    return courses;
+    return { courseNums, courseToNums };
 }
 
 
@@ -198,7 +162,7 @@ function ParseDates(days: string[], year: number): Date[] {
 async function ObtainCurrentQuarters() {
     let { data: coursePageHTML } = await axios({
         method: "GET",
-        url: courseUrl
+        url: courseURL
     });
 
     let page = cheerio.load(coursePageHTML);
@@ -277,38 +241,74 @@ async function GetQuarters(): Promise<Quarters> {
 
 async function main() {
     let quarters = await GetQuarters();
-    let quarter = quarters.spring;
-    let classes: Courses = await GetClasses(quarter.num, quarter.year);
-    let courseSelected = classes[62602];
-    let { keyDates } = quarters.spring;
-    console.log(keyDates);
-    console.log(courseSelected);
-    console.log(courseSelected.meets);
-    let { meets } = courseSelected;
-    let { begins, ends } = keyDates.instruction;
-    let [startDate, endDate] = firstDayInMonth(meets[0].days[0], begins.getMonth(), quarter.year, meets[0]);
-    console.log(startDate.toLocaleString());
-    console.log(endDate.toLocaleString());
-    
-    let cal = ical({ domain: "ucsc-cal.com", name: "ucsc" });
-    let event = cal.createEvent({
-        timezone:"America/Los_Angeles",
-        start: startDate,
-        summary: courseSelected.name,
-        description: "",
-        location: courseSelected.loc,
-        end: endDate,
-        repeating: {
-            freq: "WEEKLY",
-            exclude: keyDates.holidays,
-            byDay: courseSelected.meets[0].days,
-            until: ends
-        },
-        alarms:[],
-    });
-    console.log(cal.toJSON());
-    
-    cal.saveSync("./cal.ics")
+    let { num, year } = quarters.spring;
+    let { courseNums, courseToNums } = await GetClasses(num, year);
+    // console.log(courseNums.length);
+    // console.log(Object.keys(courseToNums).length);
+
+
+    for (let i = 0; i < courseNums.length; i++) {
+        const courseNum = courseNums[i];
+        const query: Record<string, string> = {
+            "action": "detail",
+            "class_data[:STRM]": num.toString(),
+            "binds[:term]": num.toString(),
+            "class_data[:CLASS_NBR]": courseNum.toString(),
+        }
+        const data = new URLSearchParams(query);
+        let { data: html } = await axios({
+            method: "POST",
+            url: courseURL,
+            data
+        });
+
+        let $ = cheerio.load(html);
+        let [, course, section, title] = $("div.panel>div.panel-body>div.row:nth-child(1) h2 ").text().trim().match(/([A-Z]+\s\w+) - (\d+)\s+(.+)/i);
+        let panels = $("div.panel>div.panel-body>div.panel-group").children().toArray();
+        let type = $("div.panel-body dl.dl-horizontal dd:nth-child(4)", panels[0]).text();
+        let [heading, body] = $(panels[panels.length - 1]).children().toArray();
+        let headingText = $(heading).text();
+        let time, loc, instr, meetingDates;
+        if (headingText.includes("Labs")) {
+            let labs = ObtainLabData($, body);
+            let meetingPanel = $(panels[panels.length - 2]).children().get(1);
+            [time, loc, instr, meetingDates] = $("tr:nth-child(2) td", meetingPanel).toArray().map(el => $(el).text());
+        } else {
+            let meetingPanel = $(body).children().get(0);
+            [time, loc, instr, meetingDates] = $("tr:nth-child(2) td", meetingPanel).toArray().map(el => $(el).text());
+        }
+        console.log(`${time} ${loc} ${instr} ${meetingDates}`);
+    }
+    // let courseSelected = classes[62602];
+    // let { keyDates } = quarters.spring;
+    // console.log(keyDates);
+    // console.log(courseSelected);
+    // console.log(courseSelected.meets);
+    // let { meets } = courseSelected;
+    // let { begins, ends } = keyDates.instruction;
+    // let [startDate, endDate] = firstDayInMonth(meets[0].days[0], begins.getMonth(), quarter.year, meets[0]);
+    // console.log(startDate.toLocaleString());
+    // console.log(endDate.toLocaleString());
+
+    // let cal = ical({ domain: "ucsc-cal.com", name: "ucsc" });
+    // let event = cal.createEvent({
+    //     timezone:"America/Los_Angeles",
+    //     start: startDate,
+    //     summary: courseSelected.name,
+    //     description: "",
+    //     location: courseSelected.loc,
+    //     end: endDate,
+    //     repeating: {
+    //         freq: "WEEKLY",
+    //         exclude: keyDates.holidays,
+    //         byDay: courseSelected.meets[0].days,
+    //         until: ends
+    //     },
+    //     alarms:[],
+    // });
+    // console.log(cal.toJSON());
+
+    // cal.saveSync("./cal.ics")
 }
 
 
