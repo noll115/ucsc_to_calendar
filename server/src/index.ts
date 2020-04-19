@@ -2,7 +2,7 @@ import cheerio from 'cheerio';
 import axios from 'axios'
 import ical, { day } from "ical-generator";
 import { promises as fsPromise } from "fs";
-import { Courses, Course, Labs, Lab, Meeting } from "./models/course-data";
+import { Courses, Course, Labs, Lab, Meeting, TBA, UCSCDates, iCalDates } from "./models/course-data";
 import { Quarter, Quarters, QuarterSeasons, KeyDates } from "./models/quarter-data";
 
 const keyDatesURL = "https://registrar.ucsc.edu/calendar/key-dates/index.html";
@@ -10,11 +10,9 @@ const courseURL = "https://pisa.ucsc.edu/class_search/index.php";
 const finalURL = "https://registrar.ucsc.edu/soc/final-examinations.html"
 
 
-function translateDaysToIcal(daysStr: string): day[] {
-    const possibilities = ["M", "Tu", "W", "Th", "F", "Sa"];
-    const iCalDates: day[] = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
+function UCSCToIcalDays(daysStr: string): day[] {
     let days: day[] = [];
-    possibilities.forEach((day, i) => {
+    UCSCDates.forEach((day, i) => {
         if (daysStr.includes(day))
             days.push(iCalDates[i]);
     });
@@ -40,12 +38,12 @@ function ObtainLabData($: CheerioStatic, labPanel: CheerioElement): Labs {
         let labDetail: Lab = {
             num: parseInt(labNum),
             sect: section,
-            meet: days.includes("TBA") ? "TBA" : {
-                days: translateDaysToIcal(days),
+            meet: days.includes("TBA") ? TBA : {
+                days: UCSCToIcalDays(days),
                 start: localTo24Hrs(start),
-                end: localTo24Hrs(end)
+                end: localTo24Hrs(end),
+                loc: location
             },
-            loc: location
         };
         labsAvailable[labDetail.num] = labDetail;
     })
@@ -75,7 +73,7 @@ function firstDayInMonth(day: day, m: number, y: number, { start, end }: Meeting
 }
 
 
-async function GetClasses(quarterNum: number, year: number): Promise<{ courseNums: number[], courseToNums: { [index: string]: number } }> {
+async function GetCourses(quarterNum: number, year: number): Promise<{ courseNums: number[], courseToNums: { [index: string]: number } }> {
 
     const query: Record<string, string> = {
         "action": "results",
@@ -242,9 +240,9 @@ async function GetQuarters(): Promise<Quarters> {
 async function main() {
     let quarters = await GetQuarters();
     let { num, year } = quarters.spring;
-    let { courseNums, courseToNums } = await GetClasses(num, year);
-    // console.log(courseNums.length);
-    // console.log(Object.keys(courseToNums).length);
+    let { courseNums, courseToNums } = await GetCourses(num, year);
+
+    let courses: Courses = {};
 
 
     for (let i = 0; i < courseNums.length; i++) {
@@ -262,22 +260,56 @@ async function main() {
             data
         });
 
+
         let $ = cheerio.load(html);
         let [, course, section, title] = $("div.panel>div.panel-body>div.row:nth-child(1) h2 ").text().trim().match(/([A-Z]+\s\w+) - (\d+)\s+(.+)/i);
         let panels = $("div.panel>div.panel-body>div.panel-group").children().toArray();
         let type = $("div.panel-body dl.dl-horizontal dd:nth-child(4)", panels[0]).text();
         let [heading, body] = $(panels[panels.length - 1]).children().toArray();
         let headingText = $(heading).text();
-        let time, loc, instr, meetingDates;
+        let meets = [];
+        let labs = null;
         if (headingText.includes("Labs")) {
-            let labs = ObtainLabData($, body);
+            labs = ObtainLabData($, body);
             let meetingPanel = $(panels[panels.length - 2]).children().get(1);
-            [time, loc, instr, meetingDates] = $("tr:nth-child(2) td", meetingPanel).toArray().map(el => $(el).text());
+            let trElems = $("tr", meetingPanel).toArray();
+            for (let i = 1; i < trElems.length; i++) {
+                const tr = trElems[i];
+                let [time, loc, instr, meetingDates] = $("td", tr).toArray().map(el => $(el).text());
+                let [days, timeslot] = time.split(" ");
+                let [start, end] = timeslot.split("-");
+                meets.push({
+                    days: UCSCToIcalDays(days),
+                    start: localTo24Hrs(start),
+                    end: localTo24Hrs(end),
+                    loc
+                });
+            }
         } else {
             let meetingPanel = $(body).children().get(0);
-            [time, loc, instr, meetingDates] = $("tr:nth-child(2) td", meetingPanel).toArray().map(el => $(el).text());
+            let trElems = $("tr", meetingPanel).toArray();
+            for (let i = 1; i < trElems.length; i++) {
+                const tr = trElems[i];
+                let [time, loc, instr, meetingDates] = $("td", tr).toArray().map(el => $(el).text());
+                let [days, timeslot] = time.split(" ");
+                let [start, end] = timeslot.split("-");
+                meets.push({
+                    days: UCSCToIcalDays(days),
+                    start: localTo24Hrs(start),
+                    end: localTo24Hrs(end),
+                    loc
+                });
+            }
         }
-        console.log(`${time} ${loc} ${instr} ${meetingDates}`);
+        let courseObj: Course = {
+            course,
+            section,
+            title,
+            num: courseNum,
+            labs,
+            meets
+        };
+
     }
     // let courseSelected = classes[62602];
     // let { keyDates } = quarters.spring;
