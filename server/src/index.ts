@@ -246,8 +246,7 @@ async function main() {
 
     // let courses: Courses = {};
     let date = new Date(year,begins.getMonth(),begins.getDate());
-    console.log(date);
-    for (let i = 1; i < 8; i++) {
+    for (let i = 0; i < 8; i++) {
         console.log(new Date(date.getFullYear(),date.getMonth(),date.getDate()+i));
     }
     
