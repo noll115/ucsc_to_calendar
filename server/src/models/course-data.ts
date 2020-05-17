@@ -1,13 +1,13 @@
 import { day } from "ical-generator";
 
 const TBA = "TBA";
-const iCalDates: day[] = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
-const UCSCDates = ["M", "Tu", "W", "Th", "F", "Sa"];
+const iCalDates: day[] = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+const UCSCDates = ["Su","M", "Tu", "W", "Th", "F", "Sa"];
 
 interface Meeting {
     days: day[],
-    start: string,
-    end: string,
+    start: Date,
+    end: Date,
     loc: string
 };
 

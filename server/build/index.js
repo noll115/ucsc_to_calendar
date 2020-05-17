@@ -233,9 +233,12 @@ function main() {
         let { instruction: { begins } } = keyDates;
         // let { courseNums, courseToNums } = await GetCourses(num, year);
         // let courses: Courses = {};
+        let days = ["sun", "mon", "tues", "weds", "thurs", "fri", "sat"];
         let date = new Date(year, begins.getMonth(), begins.getDate());
         for (let i = 0; i < 8; i++) {
-            console.log(new Date(date.getFullYear(), date.getMonth(), date.getDate() + i));
+            let newDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() + i);
+            console.log(newDate);
+            console.log(days[newDate.getDay()]);
         }
         // for (let i = 0; i < courseNums.length; i++) {
         //     const courseNum = courseNums[i];
