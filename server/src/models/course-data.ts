@@ -2,7 +2,7 @@ import { day } from "ical-generator";
 
 const TBA = "TBA";
 const iCalDates: day[] = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
-const UCSCDates = ["Su","M", "Tu", "W", "Th", "F", "Sa"];
+const UCSCDates = ["Su", "M", "Tu", "W", "Th", "F", "Sa"];
 
 interface Meeting {
     days: day[],
@@ -26,6 +26,7 @@ interface Course {
     course: string,
     section: string,
     title: string,
+    type: string,
     num: number,
     meets: Meeting[] | typeof TBA,
     labs: Labs | null

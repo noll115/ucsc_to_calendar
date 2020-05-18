@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const TBA = "TBA";
 exports.TBA = TBA;
-const iCalDates = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
+const iCalDates = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
 exports.iCalDates = iCalDates;
-const UCSCDates = ["M", "Tu", "W", "Th", "F", "Sa"];
+const UCSCDates = ["Su", "M", "Tu", "W", "Th", "F", "Sa"];
 exports.UCSCDates = UCSCDates;
 ;
 ;

@@ -26,34 +26,45 @@ function UCSCToIcalDays(daysStr) {
     });
     return days;
 }
-function ObtainLabData($, labPanel) {
+function ObtainLabs($, labPanel, keyDates) {
     let labsAvailable = { type: '' };
     let labs = $(labPanel).children();
     let labTitleRegex = /#(\d+) (\w+) (\w+)/;
     $(labs).each((i, lab) => {
+        let labDetail = null;
         let labInfo = $(lab).children().toArray();
-        let [days, time] = $(labInfo[1]).text().split(" ");
+        let [days, timeSlot] = $(labInfo[1]).text().split(" ");
         if (days.includes("Cancelled"))
             return true;
         let [, labNum, type, section] = $(labInfo[0]).text().match(labTitleRegex);
-        let [, location] = $(labInfo[3]).text().split(": ");
-        labsAvailable.type = labsAvailable.type || type;
-        let [start, end] = time.split("-");
-        let labDetail = {
-            num: parseInt(labNum),
-            sect: section,
-            meet: days.includes("TBA") ? course_data_1.TBA : {
-                days: UCSCToIcalDays(days),
-                start: localTo24Hrs(start),
-                end: localTo24Hrs(end),
-                loc: location
-            },
-        };
+        if (days.includes("TBA")) {
+            labDetail = {
+                num: parseInt(labNum),
+                sect: section,
+                meet: course_data_1.TBA
+            };
+        }
+        else {
+            let meetingDays = UCSCToIcalDays(days);
+            let [, location] = $(labInfo[3]).text().split(": ");
+            labsAvailable.type = labsAvailable.type || type;
+            let [startTime, endTime] = GetFirstMeeting(keyDates, timeSlot, meetingDays[0]);
+            labDetail = {
+                num: parseInt(labNum),
+                sect: section,
+                meet: {
+                    days: meetingDays,
+                    start: startTime,
+                    end: endTime,
+                    loc: location
+                },
+            };
+        }
         labsAvailable[labDetail.num] = labDetail;
     });
     return labsAvailable;
 }
-function localTo24Hrs(local) {
+function LocalTo24Hrs(local) {
     let timeRegex = new RegExp(/(\d{2}):(\d{2})(PM|AM)/);
     let [, hours, minutes, period] = timeRegex.exec(local);
     if (period === "PM") {
@@ -62,14 +73,42 @@ function localTo24Hrs(local) {
     }
     return `${hours}:${minutes}`;
 }
-function firstDayInMonth(day, month, year, { start, end }) {
-    let days = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
-    let dayChosen = days.indexOf(day);
-    let [startHr, startMin] = start.split(":").map(str => parseInt(str));
-    let [endHr, endMin] = end.split(":").map(str => parseInt(str));
+function GetFirstMeeting({ instruction }, timeSlot, firstMeetingDay) {
+    let dayChosen = course_data_1.iCalDates.indexOf(firstMeetingDay);
+    let [startTimeSlot, endTimeSlot] = timeSlot.split("-").map(time => LocalTo24Hrs(time));
+    let [startHr, startMin] = startTimeSlot.split(":").map(str => parseInt(str));
+    let [endHr, endMin] = endTimeSlot.split(":").map(str => parseInt(str));
     // day is in range 0 Sunday to 6 Saturday
-    let firstDay = 1 + (dayChosen - new Date(year, month, 1).getDay() + 7) % 7;
-    return [new Date(year, month, firstDay, startHr, startMin), new Date(year, month, firstDay, endHr, endMin)];
+    let meetingDate = null;
+    for (let i = 0; i < 8; i++) {
+        let newDay = instruction.begins.getDay() + i;
+        if (newDay % 7 == dayChosen) {
+            meetingDate = new Date(instruction.begins.getFullYear(), instruction.begins.getMonth(), instruction.begins.getDate() + i);
+            break;
+        }
+    }
+    return [
+        new Date(meetingDate.getFullYear(), meetingDate.getMonth(), meetingDate.getDate(), startHr, startMin),
+        new Date(meetingDate.getFullYear(), meetingDate.getMonth(), meetingDate.getDate(), endHr, endMin)
+    ];
+}
+function ObtainCourseMeetings(meetingPanel, $, keyDates) {
+    let trElems = $("tr", meetingPanel).toArray();
+    let meets = [];
+    for (let i = 1; i < trElems.length; i++) {
+        const tr = trElems[i];
+        let [time, loc, instr, meetingDates] = $("td", tr).toArray().map(el => $(el).text());
+        let [days, timeSlot] = time.split(" ");
+        let meetingDays = UCSCToIcalDays(days);
+        let [startTime, endTime] = GetFirstMeeting(keyDates, timeSlot, meetingDays[0]);
+        meets.push({
+            days: meetingDays,
+            start: startTime,
+            end: endTime,
+            loc
+        });
+    }
+    return meets;
 }
 function GetCourses(quarterNum, year) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -112,6 +151,7 @@ function GetCourses(quarterNum, year) {
             let courseNum = parseInt($("[id^='class_nbr_']", elem).text());
             let [, course, section, courseName] = $("[id^='class_id_']", elem).text().trim().match(/(\w+ \w+) - (\w+)\s+(.+)/);
             courseToNums[`${course} - ${section} ${courseName}`] = courseNum;
+            courseNums.push(courseNum);
         });
         return { courseNums, courseToNums };
     });
@@ -231,91 +271,55 @@ function main() {
         let quarters = yield GetQuarters();
         let { num, year, keyDates } = quarters.spring;
         let { instruction: { begins } } = keyDates;
-        // let { courseNums, courseToNums } = await GetCourses(num, year);
-        // let courses: Courses = {};
-        let days = ["sun", "mon", "tues", "weds", "thurs", "fri", "sat"];
-        let date = new Date(year, begins.getMonth(), begins.getDate());
-        for (let i = 0; i < 8; i++) {
-            let newDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() + i);
-            console.log(newDate);
-            console.log(days[newDate.getDay()]);
+        let { courseNums, courseToNums } = yield GetCourses(num, year);
+        let courses = {};
+        for (const courseName in courseToNums) {
+            const courseNum = courseToNums[courseName];
+            const query = {
+                "action": "detail",
+                "class_data[:STRM]": num.toString(),
+                "binds[:term]": num.toString(),
+                "class_data[:CLASS_NBR]": courseNum.toString(),
+            };
+            const data = new URLSearchParams(query);
+            let { data: html } = yield axios_1.default({
+                method: "POST",
+                url: courseURL,
+                data
+            });
+            let $ = cheerio_1.default.load(html);
+            let [, course, section, title] = $("div.panel>div.panel-body>div.row:nth-child(1) h2 ").text().trim().match(/([A-Z]+\s\w+) - (\d+)\s+(.+)/i);
+            let panels = $("div.panel>div.panel-body>div.panel-group").children().toArray();
+            let type = $("div.panel-body dl.dl-horizontal dd:nth-child(4)", panels[0]).text();
+            let [heading, body] = $(panels[panels.length - 1]).children().toArray();
+            let headingText = $(heading).text();
+            let meets = [];
+            let labs = null;
+            if (headingText.includes("Labs")) {
+                labs = ObtainLabs($, body, keyDates);
+                let meetingPanel = $(panels[panels.length - 2]).children().get(1);
+                meets = ObtainCourseMeetings(meetingPanel, $, keyDates);
+            }
+            else {
+                let meetingPanel = $(body).children().get(0);
+                meets = ObtainCourseMeetings(meetingPanel, $, keyDates);
+            }
+            let courseObj = {
+                course,
+                section,
+                title,
+                num: courseNum,
+                labs,
+                meets
+            };
+            console.log(courseObj);
+            console.log(courseObj.labs[62603].meet);
+            if (courseObj.meets != course_data_1.TBA) {
+                console.log(courseObj.meets[0].start.toLocaleString());
+                console.log(courseObj.meets[0].end.toLocaleString());
+            }
+            break;
         }
-        // for (let i = 0; i < courseNums.length; i++) {
-        //     const courseNum = courseNums[i];
-        //     const query: Record<string, string> = {
-        //         "action": "detail",
-        //         "class_data[:STRM]": num.toString(),
-        //         "binds[:term]": num.toString(),
-        //         "class_data[:CLASS_NBR]": courseNum.toString(),
-        //     }
-        //     const data = new URLSearchParams(query);
-        //     let { data: html } = await axios({
-        //         method: "POST",
-        //         url: courseURL,
-        //         data
-        //     });
-        //     let $ = cheerio.load(html);
-        //     let [, course, section, title] = $("div.panel>div.panel-body>div.row:nth-child(1) h2 ").text().trim().match(/([A-Z]+\s\w+) - (\d+)\s+(.+)/i);
-        //     let panels = $("div.panel>div.panel-body>div.panel-group").children().toArray();
-        //     let type = $("div.panel-body dl.dl-horizontal dd:nth-child(4)", panels[0]).text();
-        //     let [heading, body] = $(panels[panels.length - 1]).children().toArray();
-        //     let headingText = $(heading).text();
-        //     let meets = [];
-        //     let labs = null;
-        //     if (headingText.includes("Labs")) {
-        //         labs = ObtainLabData($, body);
-        //         let meetingPanel = $(panels[panels.length - 2]).children().get(1);
-        //         let trElems = $("tr", meetingPanel).toArray();
-        //         for (let i = 1; i < trElems.length; i++) {
-        //             const tr = trElems[i];
-        //             let [time, loc, instr, meetingDates] = $("td", tr).toArray().map(el => $(el).text());
-        //             let [days, timeslot] = time.split(" ");
-        //             let [start, end] = timeslot.split("-");
-        //             meets.push({
-        //                 days: UCSCToIcalDays(days),
-        //                 start: localTo24Hrs(start),
-        //                 end: localTo24Hrs(end),
-        //                 loc
-        //             });
-        //         }
-        //     } else {
-        //         let meetingPanel = $(body).children().get(0);
-        //         let trElems = $("tr", meetingPanel).toArray();
-        //         for (let i = 1; i < trElems.length; i++) {
-        //             const tr = trElems[i];
-        //             let [time, loc, instr, meetingDates] = $("td", tr).toArray().map(el => $(el).text());
-        //             let [days, timeslot] = time.split(" ");
-        //             let [start, end] = timeslot.split("-").map(time => localTo24Hrs(time));
-        //             let meetingDays = UCSCToIcalDays(days);
-        //             //get first working day of week not month
-        //             // let [startTime, endTime] = firstDayInMonth(meetingDays[0])
-        //             // meets.push({
-        //             //     days: meetingDays,
-        //             //     start: ,
-        //             //     end: ,
-        //             //     loc
-        //             // });
-        //         }
-        //     }
-        //     let courseObj: Course = {
-        //         course,
-        //         section,
-        //         title,
-        //         num: courseNum,
-        //         labs,
-        //         meets
-        //     };
-        // }
-        // let courseSelected = classes[62602];
-        // let { keyDates } = quarters.spring;
-        // console.log(keyDates);
-        // console.log(courseSelected);
-        // console.log(courseSelected.meets);
-        // let { meets } = courseSelected;
-        // let { begins, ends } = keyDates.instruction;
-        // let [startDate, endDate] = firstDayInMonth(meets[0].days[0], begins.getMonth(), quarter.year, meets[0]);
-        // console.log(startDate.toLocaleString());
-        // console.log(endDate.toLocaleString());
         // let cal = ical({ domain: "ucsc-cal.com", name: "ucsc" });
         // let event = cal.createEvent({
         //     timezone:"America/Los_Angeles",

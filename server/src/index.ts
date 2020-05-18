@@ -19,32 +19,41 @@ function UCSCToIcalDays(daysStr: string): day[] {
     return days;
 }
 
-function ObtainLabs($: CheerioStatic, labPanel: CheerioElement): Labs {
+function ObtainLabs($: CheerioStatic, labPanel: CheerioElement, keyDates: KeyDates): Labs {
     let labsAvailable: Labs = { type: '' };
     let labs = $(labPanel).children();
 
     let labTitleRegex = /#(\d+) (\w+) (\w+)/;
     $(labs).each((i, lab) => {
-
+        let labDetail: Lab = null;
         let labInfo = $(lab).children().toArray();
-        let [days, time] = $(labInfo[1]).text().split(" ");
+        let [days, timeSlot] = $(labInfo[1]).text().split(" ");
         if (days.includes("Cancelled"))
             return true;
-
         let [, labNum, type, section] = $(labInfo[0]).text().match(labTitleRegex);
-        let [, location] = $(labInfo[3]).text().split(": ");
-        labsAvailable.type = labsAvailable.type || type;
-        let [start, end] = time.split("-");
-        let labDetail: Lab = {
-            num: parseInt(labNum),
-            sect: section,
-            meet: days.includes("TBA") ? TBA : {
-                days: UCSCToIcalDays(days),
-                start: LocalTo24Hrs(start),
-                end: LocalTo24Hrs(end),
-                loc: location
-            },
-        };
+        if (days.includes("TBA")) {
+            labDetail = {
+                num: parseInt(labNum),
+                sect: section,
+                meet: TBA
+            }
+        }
+        else {
+            let meetingDays = UCSCToIcalDays(days);
+            let [, location] = $(labInfo[3]).text().split(": ");
+            labsAvailable.type = labsAvailable.type || type;
+            let [startTime, endTime] = GetFirstMeeting(keyDates, timeSlot, meetingDays[0])
+            labDetail = {
+                num: parseInt(labNum),
+                sect: section,
+                meet: {
+                    days: meetingDays,
+                    start: startTime,
+                    end: endTime,
+                    loc: location
+                },
+            };
+        }
         labsAvailable[labDetail.num] = labDetail;
     })
 
@@ -82,7 +91,7 @@ function GetFirstMeeting({ instruction }: KeyDates, timeSlot: String, firstMeeti
     ];
 }
 
-function ObtainCourseMeetings(meetingPanel: Cheerio, $: CheerioStatic,keyDates:KeyDates) {
+function ObtainCourseMeetings(meetingPanel: Cheerio, $: CheerioStatic, keyDates: KeyDates) {
     let trElems = $("tr", meetingPanel).toArray();
     let meets = [];
     for (let i = 1; i < trElems.length; i++) {
@@ -148,7 +157,7 @@ async function GetCourses(quarterNum: number, year: number): Promise<{ courseNum
 
         let [, course, section, courseName] = $("[id^='class_id_']", elem).text().trim().match(/(\w+ \w+) - (\w+)\s+(.+)/);
         courseToNums[`${course} - ${section} ${courseName}`] = courseNum;
-
+        courseNums.push(courseNum)
     });
     return { courseNums, courseToNums };
 }
@@ -270,16 +279,15 @@ async function GetQuarters(): Promise<Quarters> {
 async function main() {
     let quarters = await GetQuarters();
     let { num, year, keyDates } = quarters.spring;
+
     let { instruction: { begins } } = keyDates
     let { courseNums, courseToNums } = await GetCourses(num, year);
 
     let courses: Courses = {};
 
+    for (const courseName in courseToNums) {
 
-
-
-    for (let i = 0; i < courseNums.length; i++) {
-        const courseNum = courseNums[i];
+        const courseNum = courseToNums[courseName];
         const query: Record<string, string> = {
             "action": "detail",
             "class_data[:STRM]": num.toString(),
@@ -293,7 +301,6 @@ async function main() {
             data
         });
 
-
         let $ = cheerio.load(html);
         let [, course, section, title] = $("div.panel>div.panel-body>div.row:nth-child(1) h2 ").text().trim().match(/([A-Z]+\s\w+) - (\d+)\s+(.+)/i);
         let panels = $("div.panel>div.panel-body>div.panel-group").children().toArray();
@@ -303,34 +310,30 @@ async function main() {
         let meets = [];
         let labs = null;
         if (headingText.includes("Labs")) {
-            labs = ObtainLabs($, body);
+            labs = ObtainLabs($, body, keyDates);
             let meetingPanel = $(panels[panels.length - 2]).children().get(1);
-            meets = ObtainCourseMeetings(meetingPanel,$,keyDates);
+            meets = ObtainCourseMeetings(meetingPanel, $, keyDates);
         } else {
             let meetingPanel = $(body).children().get(0);
-            meets = ObtainCourseMeetings(meetingPanel,$,keyDates);
+            meets = ObtainCourseMeetings(meetingPanel, $, keyDates);
         }
         let courseObj: Course = {
             course,
             section,
             title,
+            type,
             num: courseNum,
             labs,
             meets
         };
-
-    // }
-    // let courseSelected = classes[62602];
-    // let { keyDates } = quarters.spring;
-    // console.log(keyDates);
-    // console.log(courseSelected);
-    // console.log(courseSelected.meets);
-    // let { meets } = courseSelected;
-    // let { begins, ends } = keyDates.instruction;
-    // let [startDate, endDate] = firstDayInMonth(meets[0].days[0], begins.getMonth(), quarter.year, meets[0]);
-    // console.log(startDate.toLocaleString());
-    // console.log(endDate.toLocaleString());
-
+        console.log(courseObj);
+        console.log(courseObj.labs[62603].meet);
+        if (courseObj.meets != TBA) {
+            console.log(courseObj.meets[0].start.toLocaleString());
+            console.log(courseObj.meets[0].end.toLocaleString());
+        }
+        break;
+    }
     // let cal = ical({ domain: "ucsc-cal.com", name: "ucsc" });
     // let event = cal.createEvent({
     //     timezone:"America/Los_Angeles",
