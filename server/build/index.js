@@ -282,7 +282,6 @@ function main() {
         console.log(endDate.toLocaleString());
         let cal = ical_generator_1.default({ domain: "ucsc-cal.com", name: "ucsc" });
         let event = cal.createEvent({
-            timezone: "America/Los_Angeles",
             start: startDate,
             summary: courseSelected.name,
             description: "",
@@ -292,10 +291,11 @@ function main() {
                 freq: "WEEKLY",
                 exclude: keyDates.holidays,
                 byDay: courseSelected.meets[0].days,
-                until: keyDates.instruction.ends
+                until: ends
             },
             alarms: [],
         });
+        cal.timezone("America/Los_Angeles");
         console.log(cal.toJSON());
         cal.saveSync("./cal.ics");
     });
