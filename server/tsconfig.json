@@ -10,11 +10,11 @@
         "baseUrl": ".",
         "paths": {
             "*": [
-                "server/node_modules/*"
+                "./node_modules/*"
             ]
         }
     },
     "include": [
-        "server/src/**/*"
+        "./src/*/*"
     ]
 }
