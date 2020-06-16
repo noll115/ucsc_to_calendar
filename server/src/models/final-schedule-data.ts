@@ -1,9 +1,8 @@
 import { QuarterSeasons } from "./quarter-data";
 
-type ClassDays = keyof ExamSchedule;
 
 type QuarterSchedules = {
-    [p in QuarterSeasons]: ExamSchedule
+    [p in QuarterSeasons]?: ExamSchedule
 }
 
 
@@ -13,9 +12,11 @@ interface ExamTimes {
 }
 
 interface ExamSchedule {
-    MWF: ExamTimes;
-    MW: ExamTimes;
-    TuTh: ExamTimes;
+    MWF: ExamTimes[];
+    MW: ExamTimes[];
+    TuTh: ExamTimes[];
 }
 
-export { ClassDays, ExamSchedule, ExamTimes, QuarterSchedules };
+type MeetDays = keyof ExamSchedule;
+
+export { MeetDays, ExamSchedule, ExamTimes, QuarterSchedules };
