@@ -1,14 +1,51 @@
-import { ActionTypes, ClassActionTypes } from './types';
+import { ActionTypes, CourseActionTypes, QuarterActionTypes, Quarter } from './types';
+import { Course } from '../models/courses-types';
+import { ActionCreator } from 'redux'
+import { ThunkAction } from 'redux-thunk';
+import { AppState } from '.';
 
-export function addClass(classID: number | null, className: string | null): ClassActionTypes {
+export const addCourse: ActionCreator<ThunkAction<Promise<CourseActionTypes>, AppState, number, CourseActionTypes>>
+    = (courseID: number) => {
+        return async (dispatch, getState) => {
+
+            let course: Course = await (await fetch("https://app.fakejson.com/q/XYpwaVv4?token=B_Fwikj8mKS-Fvj47RKL9Q", {
+                method: "GET"
+            })).json();
+            let quarter = getState().quarterState.selectedQuarter;
+            let addAction: CourseActionTypes = { type: ActionTypes.Add_COURSE, payload: { course, quarter } }
+            return dispatch(addAction)
+        }
+    }
+
+export const removeCourse: ActionCreator<ThunkAction<CourseActionTypes, AppState, number, CourseActionTypes>>
+    = (classID: number) => {
+        return (dispatch, getState) => {
+            let quarter = getState().quarterState.selectedQuarter;
+            return {
+                type: ActionTypes.REMOVE_COURSE,
+                payload: {
+                    classID,
+                    quarter
+                }
+            }
+        }
+
+    }
+
+export const setQuarter = (quarter: Quarter): QuarterActionTypes => {
     return {
-        type: ActionTypes.ADD_CLASS,
-        classID,
-        className
+        type: ActionTypes.SELECT_QUARTER,
+        payload: {
+            quarter
+        }
     }
 }
 
-export function removeClass(classID: number) {
-    type: ActionTypes.REMOVE_CLASS,
-        classID
+export const setQuarters = (quarters: Array<Quarter>): QuarterActionTypes => {
+    return {
+        type: ActionTypes.SET_AVAIL_QUARTERS,
+        payload: {
+            availableQuarters: quarters
+        }
+    }
 }
