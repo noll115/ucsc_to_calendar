@@ -8,7 +8,7 @@ export enum ActionTypes {
     SELECT_QUARTER,
     SET_AVAIL_QUARTERS,
 }
-export enum Quarter {
+export enum Quarters {
     WINTER = "Winter",
     FALL = "Fall",
     SPRING = "Spring",
@@ -19,7 +19,7 @@ interface AddCourseAction
     extends Action<ActionTypes.Add_COURSE> {
     payload: {
         course: Course,
-        quarter: Quarter
+        quarter: Quarters
     }
 }
 
@@ -27,13 +27,13 @@ interface RemoveCourseAction
     extends Action<ActionTypes.REMOVE_COURSE> {
     payload: {
         classID: number
-        quarter: Quarter
+        quarter: Quarters
     }
 }
 
 
 export type CalendarState = {
-    [key in Quarter]: Array<Course>
+    [key in Quarters]: Array<Course>
 }
 
 
@@ -44,7 +44,7 @@ export type CourseActionTypes = AddCourseAction | RemoveCourseAction;
 interface SelectQuarterAction
     extends Action<ActionTypes.SELECT_QUARTER> {
     payload: {
-        quarter: Quarter
+        quarter: Quarters
     }
 }
 
@@ -52,17 +52,17 @@ interface SelectQuarterAction
 interface SetAvailQuartersAction
     extends Action<ActionTypes.SET_AVAIL_QUARTERS> {
     payload: {
-        availableQuarters: Array<Quarter>
+        availableQuarters: Array<Quarters>
     }
 }
 
 type CoursesAvailable = {
-    [key in Quarter]: Array<string>
+    [key in Quarters]: Array<string>
 }
 
 export interface QuartersState {
-    availableQuarters: Array<Quarter>,
-    selectedQuarter: Quarter,
+    availableQuarters: Array<Quarters>,
+    selectedQuarter: Quarters,
     coursesAvailable: CoursesAvailable
 }
 
