@@ -1,16 +1,14 @@
 *{
     margin: 0;
     padding: 0;
-    font-size: 16px;
     position: relative;
 }
 
-.App{
-    margin: auto;
-    width: 90%;
-}
+*, *:after, *:before {
+    box-sizing: border-box; 
+  }
 
-.container{
-    margin: auto;
+.App{
+    margin: 0 auto;
     width: 90%;
 }
