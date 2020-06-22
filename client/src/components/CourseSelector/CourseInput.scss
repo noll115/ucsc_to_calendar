@@ -1,0 +1,172 @@
+$textbox-width:65%;
+$border-size:1px;
+$component-height:2.5rem;
+$list-even-col: rgb(192, 192, 192);
+$list-odd-col: rgb(211, 209, 209);
+
+.course-input {
+    display: flex;
+    height: $component-height;
+    width: 100%;
+    border: black $border-size solid;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.course-textbox {
+    height: 100%;
+    width: $textbox-width;
+    display: flex;
+    align-items: center;
+    background-color: white;
+    transition: background-color 0.1s linear;
+    &:focus-within {
+        background-color: lightsteelblue;
+    }
+
+    svg {
+        stroke: black;
+        width: 2em;
+        height: 2em;
+    }
+
+    input {
+        width: 85%;
+        border: none;
+        padding: 0 1em 0 0.2em;
+        font-size: 1.2em;
+        height: 100%;
+        background-color: white;
+        transition: background-color 0.1s linear;
+
+        &:focus {
+            outline: none;
+            background-color: lightsteelblue;
+
+        }
+    }
+}
+
+.quarter-dropdown {
+
+    &-open,
+    &-closed {
+        width: calc(100% - #{$textbox-width});
+        height: 100%;
+        background-color: red;
+        text-align: left;
+        display: inline-block;
+        font: 400 1em Arial;
+
+        &:hover {
+            cursor: pointer;
+        }
+
+
+        span {
+            display: inline-block;
+            line-height: calc(#{$component-height} - (#{$border-size} * 2));
+            font-size: 1em;
+            padding: 0 20px 0 10px;
+            width: 100%;
+            height: calc(#{$component-height} - (#{$border-size} * 2));
+
+            &::after,
+            &::before {
+                content: '';
+                display: inline-block;
+                background-color: black;
+                position: absolute;
+                width: 0.8em;
+                height: 0.2em;
+                right: 7px;
+                top: $component-height*0.45;
+                transform-origin: center;
+                transition: transform 0.1s linear;
+            }
+
+            &::after {
+                transform: rotateZ(45deg);
+                right: 14px;
+            }
+
+            &::before {
+                transform: rotateZ(-45deg);
+
+            }
+        }
+
+        .quarter-options {
+            transform-origin: top;
+            position: absolute;
+            list-style: none;
+            width: 100%;
+            top: calc(100% + 1px);
+
+            li {
+                font: 400 1em Arial;
+                display: inline-block;
+                height: $component-height;
+                width: 100%;
+                line-height: $component-height;
+                left: 0;
+                padding: 0 20px 0 10px;
+
+                &:hover {
+                    cursor: pointer;
+                }
+
+                &:nth-child(even) {
+                    background-color: $list-even-col;
+
+                    &:hover {
+                        background-color: lighten($list-even-col, 10%);
+                    }
+                }
+
+                &:nth-child(odd) {
+                    background-color: $list-odd-col;
+
+                    &:hover {
+                        background-color: lighten($list-odd-col, 10%);
+                    }
+
+                }
+            }
+
+        }
+    }
+
+    &-closed {
+        span {}
+
+        .quarter-options {
+            transform: scaleY(0);
+            transition: transform 0.1s linear;
+        }
+    }
+
+    &-open {
+        span {
+
+            &::after {
+                transform: rotateZ(-45deg);
+            }
+
+            &::before {
+                transform: rotateZ(45deg);
+            }
+        }
+
+        .quarter-options {
+            transform: scaleY(1);
+            transition: transform 0.1s linear;
+        }
+    }
+
+
+
+
+
+}
