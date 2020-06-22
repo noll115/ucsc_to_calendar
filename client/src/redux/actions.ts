@@ -1,4 +1,4 @@
-import { ActionTypes, CourseActionTypes, QuarterActionTypes, Quarter } from './types';
+import { ActionTypes, CourseActionTypes, QuarterActionTypes, Quarters } from './types';
 import { Course } from '../models/courses-types';
 import { ActionCreator } from 'redux'
 import { ThunkAction } from 'redux-thunk';
@@ -32,7 +32,7 @@ export const removeCourse: ActionCreator<ThunkAction<CourseActionTypes, AppState
 
     }
 
-export const setQuarter = (quarter: Quarter): QuarterActionTypes => {
+export const setQuarter = (quarter: Quarters): QuarterActionTypes => {
     return {
         type: ActionTypes.SELECT_QUARTER,
         payload: {
@@ -41,7 +41,7 @@ export const setQuarter = (quarter: Quarter): QuarterActionTypes => {
     }
 }
 
-export const setQuarters = (quarters: Array<Quarter>): QuarterActionTypes => {
+export const setQuarters = (quarters: Array<Quarters>): QuarterActionTypes => {
     return {
         type: ActionTypes.SET_AVAIL_QUARTERS,
         payload: {

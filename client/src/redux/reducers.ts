@@ -1,4 +1,4 @@
-import { CalendarState, ActionTypes, CourseActionTypes, QuartersState, QuarterActionTypes, Quarter } from './types';
+import { CalendarState, ActionTypes, CourseActionTypes, QuartersState, QuarterActionTypes, Quarters } from './types';
 import { Reducer } from 'redux';
 
 const initialCalendarState: CalendarState = {
@@ -28,7 +28,7 @@ export const calendarReducer: Reducer<CalendarState, CourseActionTypes>
 
 const initialQuarterState: QuartersState = {
     availableQuarters: [],
-    selectedQuarter: Quarter.FALL,
+    selectedQuarter: Quarters.FALL,
     coursesAvailable: {
         Fall: [],
         Winter: [],
@@ -52,6 +52,5 @@ export const quarterReducer: Reducer<QuartersState, QuarterActionTypes>
                 }
             default:
                 return prevState;
-                break;
         }
     }
