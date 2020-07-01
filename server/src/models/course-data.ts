@@ -12,7 +12,7 @@ interface Meeting {
 };
 
 interface Lab {
-    num: number,
+    id: number,
     sect: string,
     meet: Meeting | typeof TBA,
 };
@@ -27,7 +27,8 @@ interface Course {
     section: string,
     title: string,
     type: string,
-    num: number,
+    id: number,
+    instructor: string,
     meets: Meeting[] | typeof TBA,
     labs: Labs | null
 };
