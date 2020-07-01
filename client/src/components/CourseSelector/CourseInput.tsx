@@ -60,12 +60,12 @@ const CourseInput: FC<CourseInputProps> = ({ addCourse, selectedQuarter, setQuar
     let currentOption = quarters[q];
     return (
         <span className="course-input" >
+            <DropDownMenu defaultVal={currentOption} options={quarters.filter(op => op !== currentOption)} onClickOption={setQuarter} />
             <span className="course-textbox">
                 <SearchLogo />
                 <input value={input} onChange={onInputChange} type="text" name="course" id="course" />
                 {/* <ResultsDropDown typing={typing != null} query={coursesQuery} /> */}
             </span>
-            <DropDownMenu defaultVal={currentOption} options={quarters.filter(op => op !== currentOption)} onClickOption={setQuarter} />
         </span>
     )
 }

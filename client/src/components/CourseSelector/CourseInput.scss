@@ -1,4 +1,4 @@
-$textbox-width:65%;
+$textbox-width:68%;
 $border-size:1px;
 $component-height:2.5rem;
 $list-even-col: rgb(192, 192, 192);
@@ -6,17 +6,16 @@ $list-odd-col: rgb(211, 209, 209);
 
 .course-input {
     display: flex;
-    height: $component-height;
     width: 100%;
     border: black $border-size solid;
     align-items: center;
     justify-content: center;
+    flex-direction: column;
 }
 
 
 .course-textbox {
-    height: 100%;
-    width: $textbox-width;
+    width: 100%;
     display: flex;
     align-items: center;
     background-color: white;
@@ -52,13 +51,12 @@ $list-odd-col: rgb(211, 209, 209);
 
     &-open,
     &-closed {
-        width: calc(100% - #{$textbox-width});
-        height: 100%;
+        width: 100%;
         background-color: red;
+        border-radius: 5px;
         text-align: left;
         display: inline-block;
         font: 400 1em Arial;
-
         &:hover {
             cursor: pointer;
         }
@@ -81,7 +79,7 @@ $list-odd-col: rgb(211, 209, 209);
                 width: 0.8em;
                 height: 0.2em;
                 right: 7px;
-                top: $component-height*0.45;
+                top: 45%;
                 transform-origin: center;
                 transition: transform 0.1s linear;
             }
