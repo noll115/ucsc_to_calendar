@@ -1,4 +1,4 @@
-const finalURL = "https://registrar.ucsc.edu/soc/final-examinations.html"
+
 import axios from 'axios'
 import cheerio from 'cheerio';
 import ical, { day } from "ical-generator";
@@ -8,9 +8,10 @@ import { QuarterSeasons } from "../models/quarter-data";
 
 import { UCSCToIcalDays, LocalTo24Hrs } from "./helper-functions";
 
+import { finalsURL } from "./url-constants";
 
 async function GetFinalDates() {
-    let { data: html } = await axios.get(finalURL);
+    let { data: html } = await axios.get(finalsURL);
     let $ = cheerio.load(html);
     let finalExamSchedules = $("div.content.contentBox table>tbody").toArray();
     let quarterSchedules: QuarterSchedules = {};
@@ -25,12 +26,26 @@ async function GetFinalDates() {
             MW: [],
             TuTh: []
         };
+        console.log(`${quarter} ${year}`);
+
         for (let i = 0; i < finalsDate.length - 1; i++) {
             const examSchedule = finalsDate[i];
             let entries = $("td", examSchedule);
             if (entries.length > 1) {
-                let [classDays, classStart, examDate, examTime] = entries.toArray().map(tr => $(tr).text().trim());
-                examDate.length > 0 && console.log(`${classDays} ${classStart} ${examDate} ${examTime}`);
+                if ($(entries[0]).text().trim().length == 0) {
+                    continue;
+                }
+                let [ucscDays, classStart, examDate, examTime] = entries.toArray().map(tr => $(tr).text().trim());
+
+                let icalDays = UCSCToIcalDays(ucscDays);
+
+                let convClassStart = classStart ? LocalTo24Hrs(classStart) : "";
+                [, examDate] = examDate.split(", ");
+                let [examStart, examEnd] = examTime.split("–");
+                let period = examEnd.substr(examEnd.length - 5);
+                examStart = LocalTo24Hrs(examStart + period);
+                examEnd = LocalTo24Hrs(examEnd);
+                console.log(`${icalDays} ${convClassStart} ${examDate} ${examStart}-${examEnd}`);
 
             }
         }
