@@ -15,11 +15,10 @@ function UCSCToIcalDays(daysStr: string): day[] {
 }
 
 function LocalTo24Hrs(local: string) {
-    let timeRegex = new RegExp(/(\d{2}):(\d{2})(PM|AM)/);
+    let timeRegex = new RegExp(/(\d+):(\d+)\s*((?:a|p)\.*m\.*)/i);
     let [, hours, minutes, period] = timeRegex.exec(local);
-    if (period === "PM") {
-        let convHrs = parseInt(hours) + 12;
-        return `${convHrs}:${minutes}`;
+    if (period === "PM" || period === "p.m.") {
+        hours = (parseInt(hours) + 12).toString();
     }
     return `${hours}:${minutes}`;
 }
