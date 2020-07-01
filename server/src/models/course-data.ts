@@ -38,4 +38,6 @@ interface Courses {
     [index: number]: Course
 };
 
-export { Courses, Course, Labs, Lab, Meeting, TBA, iCalDates, UCSCDates };
+interface CourseCatalogue { [index: string]: { [index: string]: number } }
+
+export { CourseCatalogue, Courses, Course, Labs, Lab, Meeting, TBA, iCalDates, UCSCDates };

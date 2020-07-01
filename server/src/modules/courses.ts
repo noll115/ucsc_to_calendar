@@ -1,12 +1,12 @@
 import axios from 'axios'
-import { Course, Labs, Lab, Meeting, TBA } from "../models/course-data";
+import { Course, Labs, Lab, Meeting, TBA, CourseCatalogue } from "../models/course-data";
 import { KeyDates } from "../models/quarter-data";
 import { GetFirstMeeting, UCSCToIcalDays } from "./helper-functions";
 
 import { courseSearchURL } from "./url-constants";
 
 
-async function GetAllCoursesIDs(quarterNum: number, year: number): Promise<{ [index: string]: { [index: string]: number } }> {
+async function GetAllCoursesIDs(quarterNum: number, year: number): Promise<CourseCatalogue> {
 
     const query: Record<string, string> = {
         "action": "results",
