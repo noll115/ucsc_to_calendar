@@ -1,11 +1,14 @@
 
 import axios from 'axios'
-import { Quarter, Quarters, QuarterSeasons, KeyDates } from "../models/quarter-data";
+import { Quarter, Quarters, QuarterSeasons, KeyDates } from "../types/quarter";
 import { ParseDates } from "./helper-functions";
+
+import cheerio from "cheerio";
 
 import { courseSearchURL, keyDatesURL } from "./url-constants";
 
 
+let availableQuarters: Quarters = null;
 
 async function ObtainCurrentQuarters() {
     let { data: coursePageHTML } = await axios({
@@ -21,12 +24,12 @@ async function ObtainCurrentQuarters() {
         let current = quarterElem.attr("selected")?.valueOf() !== undefined;
         let quarter: Quarter = {
             year: parseInt(year),
-            num: parseInt(quarterElem.attr("value")),
-            season: season.toLowerCase() as QuarterSeasons,
+            id: parseInt(quarterElem.attr("value")),
             current,
             keyDates: null
         };
-        quarters[quarter.season] = quarter;
+        season = season.toLowerCase();
+        quarters[season as QuarterSeasons] = quarter;
     }
     return quarters;
 }
@@ -82,11 +85,15 @@ async function SetKeyDates(currentQuarters: Quarters) {
 
 
 
-async function GetQuarters(): Promise<Quarters> {
-    let currentQuarters = await ObtainCurrentQuarters();
-    await SetKeyDates(currentQuarters);
-    return currentQuarters;
+async function GetCurrentQuarters(): Promise<Quarters> {
+    if (!availableQuarters) {
+        let currentQuarters = await ObtainCurrentQuarters();
+        await SetKeyDates(currentQuarters);
+        availableQuarters = currentQuarters;
+        return currentQuarters;
+    }
+    return availableQuarters;
 }
 
 
-export { GetQuarters };
+export { GetCurrentQuarters };

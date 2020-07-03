@@ -18,8 +18,7 @@ export type QuarterSeasons = keyof Quarters;
 
 export interface Quarter {
     year: number;
-    season: keyof Quarters;
-    num: number;
+    id: number;
     keyDates: KeyDates | null;
     current: boolean
 }

@@ -1,8 +1,9 @@
 
-import { UCSCDates, iCalDates } from "../models/course-data";
-import { KeyDates } from "../models/quarter-data";
+import { KeyDates } from "../types/quarter";
 import { day } from "ical-generator";
 
+const iCalDates: day[] = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+const UCSCDates = ["Su", "M", "Tu", "W", "Th", "F", "Sa"];
 
 
 function UCSCToIcalDays(daysStr: string): day[] {
