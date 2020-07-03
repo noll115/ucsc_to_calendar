@@ -21,14 +21,14 @@ interface Labs {
     type: string
 }
 interface Course {
-    c: string, //course
-    s: string, //section
-    ti: string, //title
-    t: string, //type
+    shortName: string,
+    sect: string,
+    fullName: string, //title
+    type: string, //type
     id: number,
     inst: string, //instructor
-    m: Meeting[] | TBA, //meets
-    l: Labs | null //labs
+    meets: Meeting[] | TBA, //times meeting
+    labs: Labs | null
 }
 
 

@@ -11,7 +11,6 @@ const app = express();
 
 app.use(helmet())
 app.use(cors());
-
 app.use("/quarters", quarterRouter);
 app.use("/courses", coursesRouter);
 

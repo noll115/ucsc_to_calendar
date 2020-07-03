@@ -78,18 +78,19 @@ function ObtainLabInfos($: CheerioStatic, labPanel: CheerioElement, keyDates: Ke
         if (days.includes("Cancelled"))
             return true;
 
-        let [, labNum, type, section] = $(labInfo[0]).text().match(labTitleRegex);
+        let [, labIDString, type, section] = $(labInfo[0]).text().match(labTitleRegex);
+        let labID = parseInt(labIDString);
         labsAvailable.type = labsAvailable.type || type;
         if (days.includes("TBA")) {
             labDetail = {
-                id: parseInt(labNum),
+                id: labID,
                 sect: section,
                 meet: "TBA"
             }
         }
         else if (days.length == 0) {
             labDetail = {
-                id: parseInt(labNum),
+                id: labID,
                 sect: section,
                 meet: "N/A"
             }
@@ -100,7 +101,7 @@ function ObtainLabInfos($: CheerioStatic, labPanel: CheerioElement, keyDates: Ke
 
             let [startTime, endTime] = GetFirstMeeting(keyDates, timeSlot, meetingDays[0])
             labDetail = {
-                id: parseInt(labNum),
+                id: labID,
                 sect: section,
                 meet: {
                     days: meetingDays,
@@ -153,7 +154,7 @@ async function QueryCourse(quarterID: number, keyDates: KeyDates, courseID: stri
         data
     });
     let $ = cheerio.load(html);
-    let [, course, section, title] = $("div.panel>div.panel-body>div.row:nth-child(1) h2").text().trim().match(/([A-Z]+\s\w+) - (\d+)\s+(.+)/i);
+    let [, shortName, section, fullName] = $("div.panel>div.panel-body>div.row:nth-child(1) h2").text().trim().match(/([A-Z]+\s\w+) - (\d+)\s+(.+)/i);
     let panels = $("div.panel>div.panel-body>div.panel-group>.panel").toArray();
     let type = $("div.panel-body dl dd:nth-child(8)", panels[0]).first().text();
 
@@ -172,14 +173,14 @@ async function QueryCourse(quarterID: number, keyDates: KeyDates, courseID: stri
         [meets, instructor] = ObtainCourseMeetingInfo(meetingPanel, $, keyDates);
     }
     return {
-        c: course,
-        s: section,
-        ti: title,
-        t: type,
+        shortName,
+        sect: section,
+        fullName,
+        type,
         inst: instructor,
         id: parseInt(courseID),
-        l: labs,
-        m: meets
+        labs,
+        meets
     };
 }
 

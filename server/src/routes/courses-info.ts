@@ -3,6 +3,7 @@ import { Router, RequestHandler, Request, query } from "express";
 import { GetCurrentQuarters } from "../lib/quarter";
 import { QuarterSeasons } from "../types/quarter";
 import { HttpException } from "../Middleware/http-exception";
+import { Course } from "../types/course";
 
 const router = Router();
 
@@ -25,19 +26,24 @@ router.use(ValidateQuarter);
 
 router.get("/", async (req, res) => {
     let { quarter } = req;
-    
+
     let availableCourses = await GetAllCoursesIDs(quarter.id);
     res.send(availableCourses)
 })
 
 
-router.get("/course", async (req, res) => {
-    let { courseIDs } = req.query;
-    
-    let { quarter } = req;
-    // let course = await QueryCourse(quarter.id, quarter.keyDates, courseID);
+router.get("/:courseID", async (req, res, next) => {
+    let { courseID } = req.params;
 
-    res.send(courseIDs)
+    let { quarter } = req;
+    let course: Course = null;
+    try {
+        course = await QueryCourse(quarter.id, quarter.keyDates, courseID);
+    } catch (error) {
+        next(new HttpException(500, `Did not find the course ${courseID}`))
+    }
+
+    res.send(course)
 })
 
 
