@@ -1,16 +1,16 @@
 import axios from 'axios'
-import { Course, Labs, Lab, Meeting, TBA, CourseCatalogue } from "../models/course-data";
-import { KeyDates } from "../models/quarter-data";
+import { Course, Labs, Lab, Meeting, TBA, CourseCatalogue } from "../types/course";
+import { KeyDates } from "../types/quarter";
 import { GetFirstMeeting, UCSCToIcalDays } from "./helper-functions";
-
+import cheerio from "cheerio";
 import { courseSearchURL } from "./url-constants";
 
 
-async function GetAllCoursesIDs(quarterNum: number, year: number): Promise<CourseCatalogue> {
+async function GetAllCoursesIDs(courseID: number): Promise<CourseCatalogue> {
 
     const query: Record<string, string> = {
         "action": "results",
-        "binds[:term]": quarterNum.toString(),
+        "binds[:term]": courseID.toString(),
         "binds[:reg_status]": "all",
         "binds[:subject]": "",
         "binds[:catalog_nbr_op]": "=",
@@ -47,10 +47,16 @@ async function GetAllCoursesIDs(quarterNum: number, year: number): Promise<Cours
         if (classTimeInfo.includes("Cancelled")) {
             return true;
         }
-        let courseNum = parseInt($("[id^='class_nbr_']", elem).text());
+        let courseID = parseInt($("[id^='class_nbr_']", elem).text());
 
-        let [, course, section, courseName] = $("[id^='class_id_']", elem).text().trim().match(/(\w+ \w+) - (\w+)\s+(.+)/);
-        courses[`${course}`][`${section}`] = courseNum;
+        let [, course, section, fullCourseName] = $("[id^='class_id_']", elem).text().trim().match(/(\w+ \w+) - (\w+)\s+(.+)/);
+        let [subject, courseNum] = course.split(" ");
+
+
+        if (courses[subject] === undefined) {
+            courses[subject] = {};
+        }
+        courses[subject][courseNum] = courseID;
     });
     return courses;
 }
@@ -67,18 +73,27 @@ function ObtainLabInfos($: CheerioStatic, labPanel: CheerioElement, keyDates: Ke
         let [days, timeSlot] = $(labInfo[1]).text().split(" ");
         if (days.includes("Cancelled"))
             return true;
+
         let [, labNum, type, section] = $(labInfo[0]).text().match(labTitleRegex);
         if (days.includes("TBA")) {
             labDetail = {
                 id: parseInt(labNum),
                 sect: section,
-                meet: TBA
+                meet: "TBA"
+            }
+        }
+        else if (days.length == 0) {
+            labDetail = {
+                id: parseInt(labNum),
+                sect: section,
+                meet: "N/A"
             }
         }
         else {
             let meetingDays = UCSCToIcalDays(days);
             let [, location] = $(labInfo[3]).text().split(": ");
             labsAvailable.type = labsAvailable.type || type;
+
             let [startTime, endTime] = GetFirstMeeting(keyDates, timeSlot, meetingDays[0])
             labDetail = {
                 id: parseInt(labNum),
@@ -108,6 +123,7 @@ function ObtainCourseMeetingInfo(meetingPanel: Cheerio, $: CheerioStatic, keyDat
         instructor = instr;
         let [days, timeSlot] = time.split(" ");
         let meetingDays = UCSCToIcalDays(days);
+
         let [startTime, endTime] = GetFirstMeeting(keyDates, timeSlot, meetingDays[0])
         meets.push({
             days: meetingDays,
@@ -119,12 +135,12 @@ function ObtainCourseMeetingInfo(meetingPanel: Cheerio, $: CheerioStatic, keyDat
     return [meets, instructor];
 }
 
-async function QueryCourse(quarterNum: string, keyDates: KeyDates, courseID?: string): Promise<Course> {
+async function QueryCourse(quarterID: number, keyDates: KeyDates, courseID: string): Promise<Course> {
     const query: Record<string, string> = {
         "action": "detail",
-        "class_data[:STRM]": courseID,
-        "binds[:term]": quarterNum,
-        "class_data[:CLASS_NBR]": courseID.toString(),
+        "class_data[:STRM]": quarterID.toString(),
+        "binds[:term]": quarterID.toString(),
+        "class_data[:CLASS_NBR]": courseID,
     };
     const data = new URLSearchParams(query);
     let { data: html } = await axios({
