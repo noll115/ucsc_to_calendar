@@ -8,7 +8,6 @@ import cheerio from "cheerio";
 import { courseSearchURL, keyDatesURL } from "./url-constants";
 
 
-let availableQuarters: Quarters = null;
 
 async function ObtainCurrentQuarters() {
     let { data: coursePageHTML } = await axios({
@@ -86,13 +85,9 @@ async function SetKeyDates(currentQuarters: Quarters) {
 
 
 async function GetCurrentQuarters(): Promise<Quarters> {
-    if (!availableQuarters) {
-        let currentQuarters = await ObtainCurrentQuarters();
-        await SetKeyDates(currentQuarters);
-        availableQuarters = currentQuarters;
-        return currentQuarters;
-    }
-    return availableQuarters;
+    let currentQuarters = await ObtainCurrentQuarters();
+    await SetKeyDates(currentQuarters);
+    return currentQuarters;
 }
 
 
