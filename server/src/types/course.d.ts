@@ -21,14 +21,14 @@ interface Labs {
     type: string
 }
 interface Course {
-    course: string,
-    section: string,
-    title: string,
-    type: string,
+    c: string, //course
+    s: string, //section
+    ti: string, //title
+    t: string, //type
     id: number,
-    instructor: string,
-    meets: Meeting[] | TBA,
-    labs: Labs | null
+    inst: string, //instructor
+    m: Meeting[] | TBA, //meets
+    l: Labs | null //labs
 }
 
 
@@ -36,6 +36,6 @@ interface Courses {
     [index: number]: Course
 }
 
-interface CourseCatalogue { [index: string]: { [index: string]: number } }
+interface CourseCatalogue { [index: string]: { [index: string]: { [index: string]: number } } }
 
 export { CourseCatalogue, Courses, Course, Labs, Lab, Meeting, TBA };

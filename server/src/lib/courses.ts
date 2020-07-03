@@ -38,7 +38,7 @@ async function GetAllCoursesIDs(courseID: number): Promise<CourseCatalogue> {
 
     let $ = cheerio.load(html);
 
-    let courses: { [index: string]: { [index: string]: number } } = {};
+    let courses: CourseCatalogue = {};
 
     $("[id^='rowpanel_']").each((i, elem) => {
         let classInfo = $("div.panel-body>div.row div:nth-child(3)", elem);
@@ -52,11 +52,15 @@ async function GetAllCoursesIDs(courseID: number): Promise<CourseCatalogue> {
         let [, course, section, fullCourseName] = $("[id^='class_id_']", elem).text().trim().match(/(\w+ \w+) - (\w+)\s+(.+)/);
         let [subject, courseNum] = course.split(" ");
 
-
         if (courses[subject] === undefined) {
             courses[subject] = {};
         }
-        courses[subject][courseNum] = courseID;
+        let coursesUnderSubject = courses[subject];
+        if (coursesUnderSubject[courseNum]) {
+            coursesUnderSubject[courseNum][section] = courseID;
+        } else {
+            coursesUnderSubject[courseNum] = { [section]: courseID }
+        }
     });
     return courses;
 }
@@ -75,6 +79,7 @@ function ObtainLabInfos($: CheerioStatic, labPanel: CheerioElement, keyDates: Ke
             return true;
 
         let [, labNum, type, section] = $(labInfo[0]).text().match(labTitleRegex);
+        labsAvailable.type = labsAvailable.type || type;
         if (days.includes("TBA")) {
             labDetail = {
                 id: parseInt(labNum),
@@ -92,7 +97,6 @@ function ObtainLabInfos($: CheerioStatic, labPanel: CheerioElement, keyDates: Ke
         else {
             let meetingDays = UCSCToIcalDays(days);
             let [, location] = $(labInfo[3]).text().split(": ");
-            labsAvailable.type = labsAvailable.type || type;
 
             let [startTime, endTime] = GetFirstMeeting(keyDates, timeSlot, meetingDays[0])
             labDetail = {
@@ -150,8 +154,9 @@ async function QueryCourse(quarterID: number, keyDates: KeyDates, courseID: stri
     });
     let $ = cheerio.load(html);
     let [, course, section, title] = $("div.panel>div.panel-body>div.row:nth-child(1) h2").text().trim().match(/([A-Z]+\s\w+) - (\d+)\s+(.+)/i);
-    let panels = $("div.panel>div.panel-body>div.panel-group").children().toArray();
-    let type = $("div.panel-body dl.dl-horizontal dd:nth-child(4)", panels[0]).text();
+    let panels = $("div.panel>div.panel-body>div.panel-group>.panel").toArray();
+    let type = $("div.panel-body dl dd:nth-child(8)", panels[0]).first().text();
+
     let [heading, body] = $(panels[panels.length - 1]).children().toArray();
     let headingText = $(heading).text();
     let meets: Meeting[] = [];
@@ -167,14 +172,14 @@ async function QueryCourse(quarterID: number, keyDates: KeyDates, courseID: stri
         [meets, instructor] = ObtainCourseMeetingInfo(meetingPanel, $, keyDates);
     }
     return {
-        course,
-        section,
-        title,
-        type,
-        instructor,
+        c: course,
+        s: section,
+        ti: title,
+        t: type,
+        inst: instructor,
         id: parseInt(courseID),
-        labs,
-        meets
+        l: labs,
+        m: meets
     };
 }
 

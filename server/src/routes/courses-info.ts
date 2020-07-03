@@ -31,12 +31,13 @@ router.get("/", async (req, res) => {
 })
 
 
-router.get("/:courseID", async (req, res) => {
-    let { courseID } = req.params;
+router.get("/course", async (req, res) => {
+    let { courseIDs } = req.query;
+    
     let { quarter } = req;
-    let course = await QueryCourse(quarter.id, quarter.keyDates, courseID);
+    // let course = await QueryCourse(quarter.id, quarter.keyDates, courseID);
 
-    res.send(course)
+    res.send(courseIDs)
 })
 
 
