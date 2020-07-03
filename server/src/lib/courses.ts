@@ -100,6 +100,7 @@ function ObtainLabInfos($: CheerioStatic, labPanel: CheerioElement, keyDates: Ke
             let [, location] = $(labInfo[3]).text().split(": ");
 
             let [startTime, endTime] = GetFirstMeeting(keyDates, timeSlot, meetingDays[0])
+            
             labDetail = {
                 id: labID,
                 sect: section,

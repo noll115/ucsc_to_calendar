@@ -21,10 +21,10 @@ interface Labs {
     type: string
 }
 interface Course {
-    shortName: string,
-    sect: string,
-    fullName: string, //title
-    type: string, //type
+    shortName: string, //CSE-3
+    sect: string, //"01"
+    fullName: string, //Intro to Computers
+    type: string, // "lecture"
     id: number,
     inst: string, //instructor
     meets: Meeting[] | TBA, //times meeting
