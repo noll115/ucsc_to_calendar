@@ -1,10 +1,10 @@
 import React from 'react';
-import './App.css';
-import { CourseSelector } from "./components/CourseSelector/CourseSelector";
+import './App.scss';
+import { CourseSelector, SlugHeader } from './components';
 function App() {
   return (
     <div className="App">
-      <CourseSelector />
+      <SlugHeader />
     </div>
   );
 }

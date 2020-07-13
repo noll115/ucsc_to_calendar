@@ -1,25 +1,38 @@
-import { CalendarState, ActionTypes, CourseActionTypes, QuartersState, QuarterActionTypes, Quarters } from './types';
 import { Reducer } from 'redux';
+import { ActionTypesQuarters, QuarterActionTypes, QuartersState } from "../types/quarter-redux";
+import { CalendarState, CalendarActionTypes, ActionTypesCalendar } from "../types/calendar-redux";
+import { CoursesAvailableState, CoursesActionTypes, ActionTypesCourses } from 'src/types/courses-redux';
+
 
 const initialCalendarState: CalendarState = {
-    Fall: [],
-    Winter: [],
-    Spring: [],
-    Summer: []
+    calendars: {
+        fall: [],
+        winter: [],
+        spring: [],
+        summer: []
+    }
 }
 
-export const calendarReducer: Reducer<CalendarState, CourseActionTypes>
+export const calendarReducer: Reducer<CalendarState, CalendarActionTypes>
     = (prevState = initialCalendarState, action) => {
         switch (action.type) {
-            case ActionTypes.Add_COURSE:
-                let { [action.payload.quarter]: prevCourses } = prevState;
+            case ActionTypesCalendar.Add_COURSE:
+                let prevCourses = prevState.calendars[action.payload.quarter];
                 return {
-                    ...prevState,
-                    [action.payload.quarter]: [...prevCourses, action.payload.course]
+                    calendars: {
+                        [action.payload.quarter]: [...prevCourses, action.payload.course],
+                        ...prevState.calendars
+                    }
                 };
-            case ActionTypes.REMOVE_COURSE:
+            case ActionTypesCalendar.REMOVE_COURSE:
+                let { classID, quarter } = action.payload
+                let prevCalendar = prevState.calendars[quarter];
+                let newCalendar = prevCalendar.filter(course => course.id != classID);
                 return {
-                    ...prevState,
+                    calendars: {
+                        [quarter]: newCalendar,
+                        ...prevState.calendars
+                    }
                 }
             default:
                 return prevState;
@@ -27,29 +40,65 @@ export const calendarReducer: Reducer<CalendarState, CourseActionTypes>
     }
 
 const initialQuarterState: QuartersState = {
-    availableQuarters: [],
-    selectedQuarter: Quarters.FALL,
-    coursesAvailable: {
-        Fall: [],
-        Winter: [],
-        Spring: [],
-        Summer: []
-    }
+    availableQuarters: {},
+    selectedQuarter: null,
+    fetching: false,
+    errMessage: "",
+    code: 0
 }
 
 export const quarterReducer: Reducer<QuartersState, QuarterActionTypes>
     = (prevState = initialQuarterState, action) => {
         switch (action.type) {
-            case ActionTypes.SELECT_QUARTER:
+            case ActionTypesQuarters.SELECT_QUARTER:
+                let { quarterSeason } = action.payload;
+                let selectedQuarter = prevState.availableQuarters[quarterSeason];
+                if (selectedQuarter)
+                    return {
+                        ...prevState,
+                        selectedQuarter
+                    }
+                return prevState;
+            case ActionTypesQuarters.QUARTERS_REQUESTED:
                 return {
                     ...prevState,
-                    selectedQuarter: action.payload.quarter
+                    fetching: true
                 }
-            case ActionTypes.SET_AVAIL_QUARTERS:
+            case ActionTypesQuarters.QUARTERS_SUCCESS:
                 return {
                     ...prevState,
-                    availableQuarters: action.payload.availableQuarters
+                    availableQuarters: action.payload.availableQuarters,
+                    fetching: false,
                 }
+            case ActionTypesQuarters.QUARTERS_FAILED:
+                return {
+                    ...prevState,
+                    ...action.payload,
+                    fetching: false,
+                }
+            default:
+                return prevState;
+        }
+    }
+
+
+const initialCoursesAvailableState: CoursesAvailableState = {
+    fall: [],
+    winter: [],
+    spring: [],
+    summer: []
+}
+
+
+export const coursesAvailableReducer: Reducer<CoursesAvailableState, ActionTypesCourses> =
+ = (prevState = initialCoursesAvailableState, action) => {
+        switch (action.type) {
+            case ActionTypesCourses.FETCH_COURSES:
+                return prevState;
+            case ActionTypesCourses.FETCH_COURSES_SUCCESS:
+                return prevState;
+            case ActionTypesCourses.FETCH_COURSES_FAIL:
+                return prevState;
             default:
                 return prevState;
         }

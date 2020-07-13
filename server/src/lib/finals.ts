@@ -2,7 +2,7 @@
 import axios from 'axios'
 import cheerio from 'cheerio';
 import { QuarterSchedules, ExamTimes, ExamSchedule } from "../types/final-schedule";
-import { QuarterSeasons } from "../types/quarter";
+import { QuarterSeasons } from "../../../shared/types";
 
 
 import { UCSCToIcalDays, LocalTo24Hrs } from "./helper-functions";

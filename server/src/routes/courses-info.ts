@@ -1,19 +1,19 @@
 import { GetAllCoursesIDs, QueryCourse } from "../lib/courses";
 import { Router, RequestHandler, Request, query } from "express";
-import { GetCurrentQuarters } from "../lib/quarter";
-import { QuarterSeasons } from "../types/quarter";
+import { GetAvailableQuarters } from "../lib/quarter";
+import { QuarterSeasons } from "../../../shared/types";
 import { HttpException } from "../Middleware/http-exception";
-import { Course } from "../types/course";
+import { Course } from "../../../shared/types";
 
 const router = Router();
 
 
 
 const ValidateQuarter: RequestHandler = async (req, res, next) => {
-    let queryQuarter = parseInt(req.query.quarter as string);
-    let availableQuarters = await GetCurrentQuarters();
-    for (const season in availableQuarters) {
-        const quarter = availableQuarters[season as QuarterSeasons];
+    let queryQuarter = parseInt(req.query["quarterID"] as string);
+    let { quarters } = await GetAvailableQuarters();
+    for (const season in quarters) {
+        const quarter = quarters[season as QuarterSeasons];
         if (quarter.id === queryQuarter) {
             req.quarter = quarter;
             return next();

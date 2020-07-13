@@ -1,6 +1,5 @@
 import axios from 'axios'
-import { Course, Labs, Lab, Meeting, TBA, CourseCatalogue } from "../types/course";
-import { KeyDates } from "../types/quarter";
+import { Course, CourseCatalogue, Meeting, KeyDates, Labs, Lab } from "../../../shared/types";
 import { GetFirstMeeting, UCSCToIcalDays } from "./helper-functions";
 import cheerio from "cheerio";
 import { courseSearchURL } from "./url-constants";
@@ -100,7 +99,7 @@ function ObtainLabInfos($: CheerioStatic, labPanel: CheerioElement, keyDates: Ke
             let [, location] = $(labInfo[3]).text().split(": ");
 
             let [startTime, endTime] = GetFirstMeeting(keyDates, timeSlot, meetingDays[0])
-            
+
             labDetail = {
                 id: labID,
                 sect: section,

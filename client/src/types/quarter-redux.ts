@@ -1,0 +1,47 @@
+import { Quarter, Quarters, QuarterSeasons, Courses, CourseCatalogue } from '../../../shared/types'
+import { Action } from 'redux'
+
+
+export enum ActionTypesQuarters {
+    SELECT_QUARTER,
+    QUARTERS_REQUESTED,
+    QUARTERS_SUCCESS,
+    QUARTERS_FAILED,
+}
+
+interface SelectQuarterAction
+    extends Action<ActionTypesQuarters.SELECT_QUARTER> {
+    payload: {
+        quarterSeason: QuarterSeasons
+    }
+}
+
+interface FetchAvailQuartersAction
+    extends Action<ActionTypesQuarters.QUARTERS_REQUESTED> {
+}
+
+interface SuccessFetchAvailQuartersAction
+    extends Action<ActionTypesQuarters.QUARTERS_SUCCESS> {
+    payload: {
+        availableQuarters: Quarters
+    }
+}
+
+
+interface FailFetchAvailQuartersAction
+    extends Action<ActionTypesQuarters.QUARTERS_FAILED> {
+    payload: {
+        code: number,
+        errMessage: string
+    }
+}
+
+export interface QuartersState {
+    availableQuarters: Quarters,
+    selectedQuarter: Quarter | null,
+    fetching: boolean,
+    errMessage: string,
+    code: Number
+}
+
+export type QuarterActionTypes = SelectQuarterAction | SuccessFetchAvailQuartersAction | FailFetchAvailQuartersAction | FetchAvailQuartersAction;

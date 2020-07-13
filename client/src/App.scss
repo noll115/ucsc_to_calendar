@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans&family=Roboto:wght@400;500&display=swap');
+@import "./global-styles/color";
+$title:'Open Sans',
+sans-serif;
+$body:'Roboto',
+sans-serif;
+
+$container-margin:0px 10px 31px 10px;
+
+$container-padding:8px 31px;
+
+:root {
+    font-family: $body;
+}
+
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.app {
+    background: $background-col;
+}
+
+.container {
+    background: $primary-col;
+    margin: $container-margin;
+    padding: $container-padding;
+}

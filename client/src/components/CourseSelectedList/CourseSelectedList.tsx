@@ -3,10 +3,8 @@ import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from '../../redux';
 
 const mapStateToProps = (state: AppState) => {
-    let { selectedQuarter } = state.quarterState;
-    let coursesSelected = state.calendarState[selectedQuarter]
     return {
-        courses: coursesSelected
+
     }
 }
 
@@ -24,16 +22,11 @@ interface Props extends ReduxProps {
 }
 
 
-const CourseSelectedList: FC<Props> = ({ courses }) => {
+const CourseSelectedList: FC<Props> = () => {
 
-    let courseElems = courses.map((course) =>
-        (<div>
-            {course.title}
-        </div>))
 
     return (
         <div>
-            {courseElems}
         </div>
     )
 }

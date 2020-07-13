@@ -1,0 +1,28 @@
+@import "../../global-styles/color";
+
+
+.header {
+    background: $header-col;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 35px 0;
+    font-size: 2rem;
+    border-bottom: 2px solid #00000011;
+
+    div {
+        padding-left: 1em;
+    }
+
+    & svg {
+        width: 2.1em;
+
+        rect {
+            stroke-width: 30px;
+        }
+
+        #slug {
+            stroke-width: 22px;
+        }
+    }
+}

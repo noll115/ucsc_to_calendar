@@ -1,5 +1,5 @@
 
-import { KeyDates } from "../types/quarter";
+import { KeyDates } from "../../../shared/types";
 import { day } from "ical-generator";
 
 const iCalDates: day[] = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];

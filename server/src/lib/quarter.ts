@@ -1,6 +1,6 @@
 
 import axios from 'axios'
-import { Quarter, Quarters, QuarterSeasons, KeyDates } from "../types/quarter";
+import { Quarter, Quarters, QuarterSeasons, KeyDates, RecentQuarters } from "../../../shared/types";
 import { ParseDates } from "./helper-functions";
 
 import cheerio from "cheerio";
@@ -9,7 +9,7 @@ import { courseSearchURL, keyDatesURL } from "./url-constants";
 
 
 
-async function ObtainCurrentQuarters() {
+async function ObtainRecentQuarters(): Promise<RecentQuarters> {
     let { data: coursePageHTML } = await axios({
         method: "GET",
         url: courseSearchURL
@@ -17,20 +17,23 @@ async function ObtainCurrentQuarters() {
 
     let page = cheerio.load(coursePageHTML);
     let quarters: Quarters = {};
+    let currentQuarter: QuarterSeasons;
     for (let i = 1; i < 3; i++) {
         let quarterElem = page(`#term_dropdown>option:nth-child(${i})`);
         let [year, season,] = quarterElem.text().split(" ");
-        let current = quarterElem.attr("selected")?.valueOf() !== undefined;
+        let isCurrent = quarterElem.attr("selected")?.valueOf() !== undefined;
         let quarter: Quarter = {
             year: parseInt(year),
             id: parseInt(quarterElem.attr("value")),
-            current,
             keyDates: null
         };
-        season = season.toLowerCase();
-        quarters[season as QuarterSeasons] = quarter;
+        let quarterSeason = season.toLowerCase() as QuarterSeasons;
+        if (isCurrent) {
+            currentQuarter = quarterSeason;
+        }
+        quarters[quarterSeason] = quarter;
     }
-    return quarters;
+    return { quarters, currentQuarter };
 }
 
 
@@ -84,11 +87,11 @@ async function SetKeyDates(currentQuarters: Quarters) {
 
 
 
-async function GetCurrentQuarters(): Promise<Quarters> {
-    let currentQuarters = await ObtainCurrentQuarters();
-    await SetKeyDates(currentQuarters);
-    return currentQuarters;
+async function GetAvailableQuarters(): Promise<RecentQuarters> {
+    let recentQuarters = await ObtainRecentQuarters();
+    await SetKeyDates(recentQuarters.quarters);
+    return recentQuarters;
 }
 
 
-export { GetCurrentQuarters };
+export { GetAvailableQuarters };

@@ -20,7 +20,6 @@ export interface Quarter {
     year: number;
     id: number;
     keyDates: KeyDates | null;
-    current: boolean
 }
 
 export interface Quarters {
@@ -28,4 +27,8 @@ export interface Quarters {
     winter?: Quarter;
     spring?: Quarter;
     summer?: Quarter;
+}
+export interface RecentQuarters {
+    quarters: Quarters,
+    currentQuarter: QuarterSeasons
 }

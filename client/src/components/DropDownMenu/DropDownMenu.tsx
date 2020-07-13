@@ -16,6 +16,8 @@ interface OptionProps<T> {
     option: Option<T>,
     optionAction: (arg: T) => void
 }
+
+
 function DropDownOption<T>({ option: { value, label }, optionAction }: OptionProps<T>): ReactElement<OptionProps<T>> {
     const onClick = () => { optionAction(value) }
     return (

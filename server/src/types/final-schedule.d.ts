@@ -1,4 +1,4 @@
-import { QuarterSeasons } from "./quarter";
+import { QuarterSeasons } from "../../../shared/types";
 
 
 type QuarterSchedules = {

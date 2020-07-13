@@ -1,51 +1,67 @@
-import { ActionTypes, CourseActionTypes, QuarterActionTypes, Quarters } from './types';
-import { Course } from '../models/courses-types';
+import { ActionTypesQuarters, QuarterActionTypes } from "../types/quarter-redux";
+import { CalendarActionTypes, ActionTypesCalendar } from "../types/calendar-redux";
+
+import { Course, QuarterSeasons, RecentQuarters, CourseCatalogue } from '../../../shared/types';
 import { ActionCreator } from 'redux'
 import { ThunkAction } from 'redux-thunk';
 import { AppState } from '.';
+import axios, { AxiosError } from "axios";
 
-export const addCourse: ActionCreator<ThunkAction<Promise<CourseActionTypes>, AppState, number, CourseActionTypes>>
-    = (courseID: number) => {
-        return async (dispatch, getState) => {
 
-            let course: Course = await (await fetch("https://app.fakejson.com/q/XYpwaVv4?token=B_Fwikj8mKS-Fvj47RKL9Q", {
-                method: "GET"
-            })).json();
-            let quarter = getState().quarterState.selectedQuarter;
-            let addAction: CourseActionTypes = { type: ActionTypes.Add_COURSE, payload: { course, quarter } }
-            return dispatch(addAction)
+export const addCourse: ActionCreator<CalendarActionTypes>
+    = (course: Course, quarter: QuarterSeasons) => ({
+        type: ActionTypesCalendar.Add_COURSE,
+        payload: {
+            course,
+            quarter
+        }
+    })
+
+
+export const removeCourse: ActionCreator<CalendarActionTypes>
+    = (classID: number, quarter: QuarterSeasons) => {
+        return {
+            type: ActionTypesCalendar.REMOVE_COURSE,
+            payload: {
+                classID,
+                quarter
+            }
         }
     }
 
-export const removeCourse: ActionCreator<ThunkAction<CourseActionTypes, AppState, number, CourseActionTypes>>
-    = (classID: number) => {
-        return (dispatch, getState) => {
-            let quarter = getState().quarterState.selectedQuarter;
+export const setQuarter: ActionCreator<ThunkAction<Promise<QuarterActionTypes>, AppState, null, QuarterActionTypes>>
+    = (quarterSeason: QuarterSeasons) =>
+        async (dispatch) => {
             return {
-                type: ActionTypes.REMOVE_COURSE,
+                type: ActionTypesQuarters.SELECT_QUARTER,
                 payload: {
-                    classID,
-                    quarter
+                    quarterSeason
                 }
             }
         }
 
-    }
-
-export const setQuarter = (quarter: Quarters): QuarterActionTypes => {
-    return {
-        type: ActionTypes.SELECT_QUARTER,
-        payload: {
-            quarter
+export const fetchQuarters: ActionCreator<ThunkAction<void, AppState, null, QuarterActionTypes>>
+    = () =>
+        async (dispatch, getState) => {
+            dispatch({ type: ActionTypesQuarters.QUARTERS_REQUESTED });
+            try {
+                let { data: recentQuarters } = await axios.get<RecentQuarters>("localhost:4000/quarters");
+                let quartersAction: QuarterActionTypes = {
+                    type: ActionTypesQuarters.QUARTERS_SUCCESS,
+                    payload: {
+                        availableQuarters: recentQuarters.quarters
+                    }
+                }
+                await dispatch(setQuarter(recentQuarters.currentQuarter))
+                dispatch(quartersAction);
+            } catch (err) {
+                let res = err as AxiosError;
+                console.log(res.response);
+                if (res.response)
+                    dispatch({
+                        type: ActionTypesQuarters.QUARTERS_FAILED, payload: {
+                            code: res.response.status, errMessage: res.response.statusText
+                        }
+                    });
+            }
         }
-    }
-}
-
-export const setQuarters = (quarters: Array<Quarters>): QuarterActionTypes => {
-    return {
-        type: ActionTypes.SET_AVAIL_QUARTERS,
-        payload: {
-            availableQuarters: quarters
-        }
-    }
-}

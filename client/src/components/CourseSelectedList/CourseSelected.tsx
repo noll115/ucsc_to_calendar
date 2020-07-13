@@ -2,7 +2,7 @@ import React, { Component, FC } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from '../../redux';
 import { removeCourse } from '../../redux/actions'
-import { Course } from '../../models/courses-types';
+import { Course } from '../../../../shared/types';
 
 
 const mapDispatchToProps = {
