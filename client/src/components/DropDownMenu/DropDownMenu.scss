@@ -1,0 +1,57 @@
+@import "../../global-styles/color";
+
+.dropdown {
+    background: $secondary-col;
+    display: inline-block;
+    border-radius: 12px;
+    width: 171px;
+    height: 38px;
+    line-height: 1.1rem;
+    position: relative;
+    font-size: 1.1rem;
+
+    .option-chosen {
+        padding: 10px 16px;
+        display: inline-block;
+        i {
+            position: absolute;
+            right: 1em;
+            transition: ease-in-out 0.2s transform;
+        }
+    }
+    &-open,
+    &-closed {
+        .options {
+            transform-origin: top;
+            position: absolute;
+            list-style: none;
+            top: 110%;
+            background: $secondary-col;
+            border-radius: 12px;
+            width:100%;
+            .option {
+                padding: 10px 16px;
+            }
+        }
+    }
+
+    &-open {
+        .option-chosen i{
+            transform:scaleY(-1)
+        }
+        .options {
+            transform: scaleY(1)
+        }
+    }
+
+    &-closed {
+        .options {
+            transform: scaleY(0);
+        }
+    }
+
+}
+
+
+
+

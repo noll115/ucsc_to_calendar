@@ -1,0 +1,16 @@
+@import "../../global-styles/color";
+
+span {
+    display: flex;
+    align-items: center;
+
+    button {
+        margin-left: 16px;
+        background: none;
+        border: $accent-col 1px solid;
+        padding: 6px 19px;
+        color: $accent-col;
+        font-family: 'Open Sans', sans-serif;
+        ;
+    }
+}

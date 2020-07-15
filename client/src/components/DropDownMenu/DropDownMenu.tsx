@@ -1,4 +1,5 @@
 import React, { useState, ReactElement } from 'react';
+import "./DropDownMenu.scss";
 
 export interface Option<T> {
     value: T,
@@ -7,7 +8,7 @@ export interface Option<T> {
 
 
 interface MenuProps<T> {
-    defaultVal: Option<T>,
+    initialValue: T,
     options: Option<T>[]
     onClickOption: (arg: T) => void
 }
@@ -21,11 +22,11 @@ interface OptionProps<T> {
 function DropDownOption<T>({ option: { value, label }, optionAction }: OptionProps<T>): ReactElement<OptionProps<T>> {
     const onClick = () => { optionAction(value) }
     return (
-        <li onClick={onClick}>{label}</li>
+        <li className="option" onClick={onClick}>{label}</li>
     );
 }
 
-function DropDownMenu<T>({ defaultVal, options, onClickOption }: MenuProps<T>): ReactElement<MenuProps<T>> {
+function DropDownMenu<T>({ initialValue, options, onClickOption }: MenuProps<T>): ReactElement<MenuProps<T>> {
     let [dropDownActive, setDropDownActive] = useState(false);
 
     const toggleDropDown = () => setDropDownActive(!dropDownActive);
@@ -33,12 +34,16 @@ function DropDownMenu<T>({ defaultVal, options, onClickOption }: MenuProps<T>): 
         toggleDropDown();
         onClickOption(value)
     }
+    let initialOption = options.find(op => op.value === initialValue);
+    let leftOverOptions = options.filter(op => op.value !== initialValue);
     return (
-        <span onClick={toggleDropDown} className={`quarter-dropdown-${dropDownActive ? 'open' : 'closed'}`}>
-            <span >{defaultVal.label}</span>
-            <ul className="quarter-options" >
-                {options.map((option: Option<T>, i) => (<DropDownOption<T> key={i} option={option} optionAction={clickedOnOption} />))}
+        <span onClick={toggleDropDown} className={`dropdown dropdown-${dropDownActive ? 'open' : 'closed'}`}>
+            <span className="option-chosen" >{initialOption?.label} <i className="fas fa-chevron-down"></i>
+            </span>
+            <ul className="options" >
+                {leftOverOptions.map((option: Option<T>, i) => (<DropDownOption<T> key={i} option={option} optionAction={clickedOnOption} />))}
             </ul>
+
         </span>
     )
 }
