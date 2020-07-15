@@ -1,4 +1,3 @@
-import CourseFinder from "./CourseFinder/CourseFinder";
 import SlugHeader from "./SlugHeader/SlugHeader";
-
-export { CourseFinder as CourseSelector, SlugHeader };
+import QuarterSelect from "./QuarterSelect/QuarterSelect";
+export {SlugHeader,QuarterSelect };
