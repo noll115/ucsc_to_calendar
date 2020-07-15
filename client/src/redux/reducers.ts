@@ -27,7 +27,7 @@ export const calendarReducer: Reducer<CalendarState, CalendarActionTypes>
             case ActionTypesCalendar.REMOVE_COURSE:
                 let { classID, quarter } = action.payload
                 let prevCalendar = prevState.calendars[quarter];
-                let newCalendar = prevCalendar.filter(course => course.id != classID);
+                let newCalendar = prevCalendar.filter(course => course.id !== classID);
                 return {
                     calendars: {
                         [quarter]: newCalendar,
@@ -41,7 +41,7 @@ export const calendarReducer: Reducer<CalendarState, CalendarActionTypes>
 
 const initialQuarterState: QuartersState = {
     availableQuarters: {},
-    selectedQuarter: null,
+    selectedQuarter: "fall",
     fetching: false,
     errMessage: "",
     code: 0

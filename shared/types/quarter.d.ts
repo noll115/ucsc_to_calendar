@@ -1,17 +1,16 @@
 export interface KeyDates {
-    finals: Date[];
-    holidays: Date[];
+    finals: Date[] | string[];
+    holidays: Date[] | string[];
     instruction: {
-        begins: Date,
-        ends: Date
+        begins: Date | string,
+        ends: Date | string
     };
     quarter: {
-        begins: Date,
-        ends: Date
+        begins: Date | string,
+        ends: Date | string
     };
     [key: string]: any
 }
-
 
 export type QuarterSeasons = keyof Quarters;
 

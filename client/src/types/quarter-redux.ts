@@ -1,4 +1,4 @@
-import { Quarter, Quarters, QuarterSeasons, Courses, CourseCatalogue } from '../../../shared/types'
+import { Quarters, QuarterSeasons } from '../../../shared/types'
 import { Action } from 'redux'
 
 
@@ -39,7 +39,7 @@ interface FailFetchAvailQuartersAction
 
 export interface QuartersState {
     availableQuarters: Quarters,
-    selectedQuarter: QuarterSeasons | null,
+    selectedQuarter: QuarterSeasons,
     fetching: boolean,
     errMessage: string,
     code: Number

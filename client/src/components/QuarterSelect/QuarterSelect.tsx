@@ -1,14 +1,17 @@
-import React, { useEffect, FC } from 'react'
-import { connect, ConnectedProps, Options } from 'react-redux'
+import React, { useEffect, FC, useState } from 'react'
+import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from '../../redux'
-import DropDownMenu, { Option } from "../DropDownMenu/DropDownMenu"
+import SelectMenu, { Option } from "../SelectMenu/SelectMenu"
 import { fetchQuarters, setQuarter } from "../../redux/actions";
-import { QuarterSeasons } from '../../../../shared/types';
+import { QuarterSeasons, Quarter } from '../../../../shared/types';
 import "./QuarterSelect.scss"
 
 const mapStateToProps = (state: AppState) => ({
     availableQuarters: state.quarterState.availableQuarters,
-    currentQuarter: state.quarterState.selectedQuarter
+    currentQuarter: state.quarterState.selectedQuarter,
+    fetching: state.quarterState.fetching,
+    errmessage: state.quarterState.errMessage,
+    code: state.quarterState.code
 })
 
 const mapDispatchToProps = {
@@ -21,38 +24,81 @@ const connected = connect(mapStateToProps, mapDispatchToProps);
 type reduxProps = ConnectedProps<typeof connected>
 
 
+function KeyDatePanel(quarter: Quarter | undefined, quarterSeason: QuarterSeasons, onClick: () => void) {
+    if (quarter) {
+        let { keyDates, year } = quarter;
+        let firstDayOfFinal = new Date(keyDates?.finals[0] as string).toDateString();
+        let lastDayOfFinal = new Date(keyDates?.finals[keyDates.finals.length - 1] as string).toDateString();
+        let strFirstDayFinal = firstDayOfFinal.substring(firstDayOfFinal.indexOf(" ") + 1, firstDayOfFinal.lastIndexOf(" "));
+        let strLastDayOfFinal = lastDayOfFinal.substring(lastDayOfFinal.indexOf(" ") + 1, lastDayOfFinal.lastIndexOf(" "));
+        let holidayDates = (keyDates?.holidays as string[]).map((dateStr: string) => {
+            let date = new Date(dateStr).toDateString();
+            return date.substring(date.indexOf(" ") + 1, date.lastIndexOf(" "));
+        });
+        let instrBeg = new Date(keyDates?.quarter.begins as string).toDateString();
+        let instrEnd = new Date(keyDates?.quarter.ends as string).toDateString();
+        return (
+            <div className="container keyDataInfo">
+                <div>{`${(quarterSeason as string).charAt(0).toUpperCase() + (quarterSeason as string).slice(1)} ${year}`}</div>
+                <div>
+                    <p>-Instruction-</p>
+                    <span>
+                        <div>Begins:</div>
+                        <div>Ends:</div>
+                    </span>
+                    <span>
+                        <div>{instrBeg.substring(instrBeg.indexOf(" "), instrBeg.lastIndexOf(" "))}</div>
+                        <div>{instrEnd.substring(instrEnd.indexOf(" "), instrEnd.lastIndexOf(" "))}</div>
+                    </span>
+                </div>
+                <div>
+                    <p>-Finals-</p>
+                    <p>{`${strFirstDayFinal} - ${strLastDayOfFinal}`}</p>
+                </div>
+                <div>
+                    <p>-Holidays-</p>
+                    <p>{`${holidayDates.join(", ")}`}</p>
+                </div>
+                <button onClick={onClick} className="btn">Done</button>
+            </div>
+        );
+    }
+    return null;
+}
 
-const QuarterSelect: FC<reduxProps> = ({ fetchQuarters, availableQuarters, currentQuarter, setQuarter }) => {
+
+const QuarterSelect: FC<reduxProps> = ({ fetchQuarters, availableQuarters, currentQuarter, setQuarter, fetching }) => {
 
     useEffect(() => {
         fetchQuarters();
-    }, [])
+    }, [fetchQuarters])
 
+    const [keyDatesShown, setKeyDatesShown] = useState(false);
     let quarters: Option<QuarterSeasons>[] = [];
     for (const season in availableQuarters) {
-        const element = availableQuarters[season as QuarterSeasons];
-        quarters.push({ value: season as QuarterSeasons, label: `${season.charAt(0).toUpperCase() + season.slice(1)} ${element?.year}` })
-        quarters.push({ value: season as QuarterSeasons, label: `${season.charAt(0).toUpperCase() + season.slice(1)} ${element?.year}` })
-        quarters.push({ value: season as QuarterSeasons, label: `${season.charAt(0).toUpperCase() + season.slice(1)} ${element?.year}` })
-        quarters.push({ value: season as QuarterSeasons, label: `${season.charAt(0).toUpperCase() + season.slice(1)} ${element?.year}` })
-        quarters.push({ value: season as QuarterSeasons, label: `${season.charAt(0).toUpperCase() + season.slice(1)} ${element?.year}` })
-        quarters.push({ value: season as QuarterSeasons, label: `${season.charAt(0).toUpperCase() + season.slice(1)} ${element?.year}` })
-
+        const quarter = availableQuarters[season as QuarterSeasons];
+        quarters.push({ value: season as QuarterSeasons, label: `${season.charAt(0).toUpperCase() + season.slice(1)} ${quarter?.year}` })
     }
 
-    let onClick = (season: QuarterSeasons) => { setQuarter(season) }
+    let onOptionClick = (season: QuarterSeasons) => { setQuarter(season) }
+    let onPanelClick = () => { setKeyDatesShown(false) };
+    let showKeyDates = () => { setKeyDatesShown(true) };
     return (
-        <div>
-            <div><label htmlFor="">For Quarter</label></div>
-            <span>
-                <DropDownMenu<QuarterSeasons>
-                    initialValue={currentQuarter ? currentQuarter : "fall"}
+        <div className="quarterInfo">
+            <label>For Quarter</label>
+            <span className="quarterSelect" >
+                <SelectMenu<QuarterSeasons>
+                    initialValue={currentQuarter}
                     options={quarters}
-                    onClickOption={onClick}
+                    onClickOption={onOptionClick}
                 />
-                <button >Key Dates</button>
+                {!fetching ? <button className="btn" onClick={showKeyDates}>Key Dates</button> : null}
             </span>
-        </div>
+            {keyDatesShown ?
+                < div className="backgroundShadow">
+                    {KeyDatePanel(availableQuarters[currentQuarter], currentQuarter, onPanelClick)}
+                </div> : null}
+        </div >
     )
 }
 

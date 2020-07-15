@@ -1,7 +1,7 @@
 import { ActionTypesQuarters, QuarterActionTypes } from "../types/quarter-redux";
 import { CalendarActionTypes, ActionTypesCalendar } from "../types/calendar-redux";
 
-import { Course, QuarterSeasons, RecentQuarters, CourseCatalogue } from '../../../shared/types';
+import { Course, QuarterSeasons, RecentQuarters } from '../../../shared/types';
 import { ActionCreator } from 'redux'
 import { ThunkAction } from 'redux-thunk';
 import { AppState } from '.';
