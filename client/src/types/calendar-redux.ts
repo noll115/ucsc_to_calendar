@@ -4,9 +4,9 @@ import { Action } from 'redux'
 
 
 export enum ActionTypesCalendar {
-    Add_COURSE,
-    REMOVE_COURSE,
-    QUERY_COURSE,
+    Add_COURSE = "ADD_COURSE",
+    REMOVE_COURSE = "REM_COURSE",
+    QUERY_COURSE = "QUERY_COURSE",
 
 }
 

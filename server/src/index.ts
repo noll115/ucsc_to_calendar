@@ -9,8 +9,8 @@ const port = process.env.PORT || 4000;
 
 const app = express();
 
-app.use(helmet())
 app.use(cors());
+app.use(helmet())
 
 app.use("/quarters", quarterRouter);
 app.use("/courses", coursesRouter);

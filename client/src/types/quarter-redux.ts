@@ -3,10 +3,10 @@ import { Action } from 'redux'
 
 
 export enum ActionTypesQuarters {
-    SELECT_QUARTER,
-    QUARTERS_REQUESTED,
-    QUARTERS_SUCCESS,
-    QUARTERS_FAILED,
+    SELECT_QUARTER = "SELECT_QUARTER",
+    QUARTERS_REQUESTED = "QUARTERS_REQ",
+    QUARTERS_SUCCESS = "QUARTERS_SUC",
+    QUARTERS_FAILED = "QUARTERS_FAIL",
 }
 
 interface SelectQuarterAction
@@ -23,7 +23,8 @@ interface FetchAvailQuartersAction
 interface SuccessFetchAvailQuartersAction
     extends Action<ActionTypesQuarters.QUARTERS_SUCCESS> {
     payload: {
-        availableQuarters: Quarters
+        availableQuarters: Quarters,
+        quarterSeason:QuarterSeasons
     }
 }
 
@@ -38,7 +39,7 @@ interface FailFetchAvailQuartersAction
 
 export interface QuartersState {
     availableQuarters: Quarters,
-    selectedQuarter: Quarter | null,
+    selectedQuarter: QuarterSeasons | null,
     fetching: boolean,
     errMessage: string,
     code: Number

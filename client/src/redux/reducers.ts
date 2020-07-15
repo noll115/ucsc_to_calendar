@@ -1,7 +1,7 @@
 import { Reducer } from 'redux';
 import { ActionTypesQuarters, QuarterActionTypes, QuartersState } from "../types/quarter-redux";
 import { CalendarState, CalendarActionTypes, ActionTypesCalendar } from "../types/calendar-redux";
-import { CoursesAvailableState, CoursesActionTypes, ActionTypesCourses } from 'src/types/courses-redux';
+import { CoursesAvailableState, ActionTypesCourses, CourseActionTypes } from 'src/types/courses-redux';
 
 
 const initialCalendarState: CalendarState = {
@@ -52,22 +52,21 @@ export const quarterReducer: Reducer<QuartersState, QuarterActionTypes>
         switch (action.type) {
             case ActionTypesQuarters.SELECT_QUARTER:
                 let { quarterSeason } = action.payload;
-                let selectedQuarter = prevState.availableQuarters[quarterSeason];
-                if (selectedQuarter)
-                    return {
-                        ...prevState,
-                        selectedQuarter
-                    }
-                return prevState;
+                return {
+                    ...prevState,
+                    selectedQuarter: quarterSeason
+                }
             case ActionTypesQuarters.QUARTERS_REQUESTED:
                 return {
                     ...prevState,
                     fetching: true
                 }
             case ActionTypesQuarters.QUARTERS_SUCCESS:
+                let { quarterSeason: chosenSeason } = action.payload;
                 return {
                     ...prevState,
                     availableQuarters: action.payload.availableQuarters,
+                    selectedQuarter: chosenSeason,
                     fetching: false,
                 }
             case ActionTypesQuarters.QUARTERS_FAILED:
@@ -90,8 +89,8 @@ const initialCoursesAvailableState: CoursesAvailableState = {
 }
 
 
-export const coursesAvailableReducer: Reducer<CoursesAvailableState, ActionTypesCourses> =
- = (prevState = initialCoursesAvailableState, action) => {
+export const coursesAvailableReducer: Reducer<CoursesAvailableState, CourseActionTypes>
+    = (prevState = initialCoursesAvailableState, action) => {
         switch (action.type) {
             case ActionTypesCourses.FETCH_COURSES:
                 return prevState;
