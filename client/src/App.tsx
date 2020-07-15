@@ -1,12 +1,15 @@
 import React from 'react';
 import './App.scss';
-import { CourseSelector, SlugHeader } from './components';
-import QuarterSelect from './components/QuarterSelect/QuarterSelect';
+import { QuarterSelect, SlugHeader } from './components';
 function App() {
   return (
     <div className="App">
       <SlugHeader />
-      <QuarterSelect />
+      <div className="container">
+        <QuarterSelect />
+      </div>
+      <div className="container"></div>
+      <div className="container"></div>
     </div>
   );
 }
