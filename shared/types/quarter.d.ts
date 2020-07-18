@@ -1,3 +1,5 @@
+import { CourseCatalogue } from "./course";
+
 export interface KeyDates {
     finals: Date[] | string[];
     holidays: Date[] | string[];
@@ -19,6 +21,7 @@ export interface Quarter {
     year: number;
     id: number;
     keyDates: KeyDates | null;
+    courses: CourseCatalogue
 }
 
 export interface Quarters {

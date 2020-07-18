@@ -6,6 +6,7 @@ import { ParseDates } from "./helper-functions";
 import cheerio from "cheerio";
 
 import { courseSearchURL, keyDatesURL } from "./url-constants";
+import { GetAllCoursesIDs } from './courses';
 
 
 
@@ -22,10 +23,12 @@ async function ObtainRecentQuarters(): Promise<RecentQuarters> {
         let quarterElem = page(`#term_dropdown>option:nth-child(${i})`);
         let [year, season,] = quarterElem.text().split(" ");
         let isCurrent = quarterElem.attr("selected")?.valueOf() !== undefined;
+        let quarterID = parseInt(quarterElem.attr("value"));
         let quarter: Quarter = {
             year: parseInt(year),
-            id: parseInt(quarterElem.attr("value")),
-            keyDates: null
+            id: quarterID,
+            keyDates: null,
+            courses: await GetAllCoursesIDs(quarterID)
         };
         let quarterSeason = season.toLowerCase() as QuarterSeasons;
         if (isCurrent) {
@@ -46,14 +49,15 @@ async function SetKeyDates(currentQuarters: Quarters) {
     let $ = cheerio.load(keyDatesHTML, {
         decodeEntities: false
     });
-    let quarterStrRegex = new RegExp(`([A-Z]+) [A-Z]+ \\d+`, "i");
+    let quarterStrRegex = new RegExp(`([A-Z]+) [A-Z]+ (\\d+)`, "i");
     let trSelect = $("#main tbody>tr").toArray();
     for (let i = 0; i < trSelect.length; i++) {
         let elemStr = $(trSelect[i]).text();
         let tokens = quarterStrRegex.exec(elemStr);
         if (tokens) {
             let season = tokens[1].toLowerCase() as QuarterSeasons;
-            if (season in currentQuarters) {
+            let keyDateYear = parseInt(tokens[2]);
+            if (season in currentQuarters && currentQuarters[season].year == keyDateYear) {
 
                 let quarter = currentQuarters[season];
                 let keyDates: KeyDates = {

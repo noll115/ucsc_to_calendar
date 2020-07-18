@@ -24,14 +24,6 @@ const ValidateQuarter: RequestHandler = async (req, res, next) => {
 
 router.use(ValidateQuarter);
 
-router.get("/", async (req, res) => {
-    let { quarter } = req;
-
-    let availableCourses = await GetAllCoursesIDs(quarter.id);
-    res.send(availableCourses)
-})
-
-
 router.get("/:courseID", async (req, res, next) => {
     let { courseID } = req.params;
 

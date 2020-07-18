@@ -85,7 +85,7 @@ const QuarterSelect: FC<reduxProps> = ({ fetchQuarters, availableQuarters, curre
     let showKeyDates = () => { setKeyDatesShown(true) };
     return (
         <div className="quarterInfo">
-            <label>For Quarter</label>
+            <label className="label">For Quarter</label>
             <span className="quarterSelect" >
                 <SelectMenu<QuarterSeasons>
                     initialValue={currentQuarter}
@@ -95,7 +95,7 @@ const QuarterSelect: FC<reduxProps> = ({ fetchQuarters, availableQuarters, curre
                 {!fetching ? <button className="btn" onClick={showKeyDates}>Key Dates</button> : null}
             </span>
             {keyDatesShown ?
-                < div className="backgroundShadow">
+                < div className="panelShadow">
                     {KeyDatePanel(availableQuarters[currentQuarter], currentQuarter, onPanelClick)}
                 </div> : null}
         </div >

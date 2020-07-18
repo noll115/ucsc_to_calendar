@@ -1,7 +1,6 @@
 import { Reducer } from 'redux';
 import { ActionTypesQuarters, QuarterActionTypes, QuartersState } from "../types/quarter-redux";
 import { CalendarState, CalendarActionTypes, ActionTypesCalendar } from "../types/calendar-redux";
-import { CoursesAvailableState, ActionTypesCourses, CourseActionTypes } from 'src/types/courses-redux';
 
 
 const initialCalendarState: CalendarState = {
@@ -80,25 +79,3 @@ export const quarterReducer: Reducer<QuartersState, QuarterActionTypes>
         }
     }
 
-
-const initialCoursesAvailableState: CoursesAvailableState = {
-    fall: [],
-    winter: [],
-    spring: [],
-    summer: []
-}
-
-
-export const coursesAvailableReducer: Reducer<CoursesAvailableState, CourseActionTypes>
-    = (prevState = initialCoursesAvailableState, action) => {
-        switch (action.type) {
-            case ActionTypesCourses.FETCH_COURSES:
-                return prevState;
-            case ActionTypesCourses.FETCH_COURSES_SUCCESS:
-                return prevState;
-            case ActionTypesCourses.FETCH_COURSES_FAIL:
-                return prevState;
-            default:
-                return prevState;
-        }
-    }
