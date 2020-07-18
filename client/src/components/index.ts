@@ -1,3 +1,4 @@
 import SlugHeader from "./SlugHeader/SlugHeader";
 import QuarterSelect from "./QuarterSelect/QuarterSelect";
-export {SlugHeader,QuarterSelect };
+import CourseSearch from "./CourseSearch/CourseSearch"
+export { SlugHeader, QuarterSelect, CourseSearch };
