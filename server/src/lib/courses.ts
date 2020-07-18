@@ -5,11 +5,11 @@ import cheerio from "cheerio";
 import { courseSearchURL } from "./url-constants";
 
 
-async function GetAllCoursesIDs(courseID: number): Promise<CourseCatalogue> {
+async function GetAllCoursesIDs(quarterID: number): Promise<CourseCatalogue> {
 
     const query: Record<string, string> = {
         "action": "results",
-        "binds[:term]": courseID.toString(),
+        "binds[:term]": quarterID.toString(),
         "binds[:reg_status]": "all",
         "binds[:subject]": "",
         "binds[:catalog_nbr_op]": "=",
