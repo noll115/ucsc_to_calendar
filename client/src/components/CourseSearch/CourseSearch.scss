@@ -1,0 +1,39 @@
+@import "../../global-styles/color";
+@import "../../global-styles/font";
+
+.courseSearch {
+    margin-top: 40px;
+
+    .hint{
+        display: inline;
+        margin-left: 10px;
+        font-size: 0.7rem;
+        color: #00000096;
+    }
+}
+.courseInput {
+    border-radius: 14px;
+    background-color: $secondary-col;
+    height: 2.4rem;
+    font-family: $sans;
+    display: flex;
+    align-items: center;
+    &:focus-within{
+        background: #D7E0FF;
+    }
+    i {
+        font-size: 1.5rem;
+        margin-left: 12px;
+    }
+
+    input {
+        border: none;
+        background: none;
+        width: 80%;
+        margin-left: 12px;
+        font-size: 1.1rem;
+        &:focus {
+            outline: none;
+        }
+    }
+}
