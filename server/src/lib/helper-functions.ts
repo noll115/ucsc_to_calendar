@@ -32,9 +32,10 @@ function GetFirstMeeting({ instruction }: KeyDates, timeSlot: String, firstMeeti
     // day is in range 0 Sunday to 6 Saturday
     let meetingDate = null;
     for (let i = 0; i < 8; i++) {
-        let newDay = instruction.begins.getDay() + i
+        let begins: Date = instruction.begins as Date;
+        let newDay = begins.getDay() + i
         if (newDay % 7 == dayChosen) {
-            meetingDate = new Date(instruction.begins.getFullYear(), instruction.begins.getMonth(), instruction.begins.getDate() + i)
+            meetingDate = new Date(begins.getFullYear(), begins.getMonth(), begins.getDate() + i)
             break;
         }
     }
