@@ -6,6 +6,7 @@ import { ActionCreator } from 'redux'
 import { ThunkAction } from 'redux-thunk';
 import { AppState } from '.';
 import axios, { AxiosError } from "axios";
+import { CoursePanelActionTypes, ActionTypesCoursePanel } from "src/types/course-redux";
 
 
 export function addCourse(course: Course, quarter: QuarterSeasons): CalendarActionTypes {
@@ -31,7 +32,7 @@ export function removeCourse(classID: number, quarter: QuarterSeasons): Calendar
 
 
 export function setQuarter(quarterSeason: QuarterSeasons): QuarterActionTypes {
-    
+
     return {
         type: ActionTypesQuarters.SELECT_QUARTER,
         payload: {
@@ -41,7 +42,7 @@ export function setQuarter(quarterSeason: QuarterSeasons): QuarterActionTypes {
 }
 
 
-export const fetchQuarters: ActionCreator<ThunkAction<void, AppState, null, QuarterActionTypes>>
+export const FetchQuarters: ActionCreator<ThunkAction<void, AppState, null, QuarterActionTypes>>
     = () =>
         async (dispatch, getState) => {
             dispatch({ type: ActionTypesQuarters.QUARTERS_REQUESTED });
@@ -63,15 +64,67 @@ export const fetchQuarters: ActionCreator<ThunkAction<void, AppState, null, Quar
                 if (res.response) {
                     dispatch({
                         type: ActionTypesQuarters.QUARTERS_FAILED, payload: {
-                            code: res.response.status, errMessage: res.response.statusText
+                            errorCode: res.response.data.status, errMessage: res.response.data.msg
                         }
                     });
                 } else {
                     dispatch({
                         type: ActionTypesQuarters.QUARTERS_FAILED, payload: {
-                            code: 500, errMessage: "Something went wrong!"
+                            errorCode: 500, errMessage: "Something went wrong!"
                         }
                     });
                 }
             }
         }
+
+
+export const FetchCourse: ActionCreator<ThunkAction<void, AppState, null, CoursePanelActionTypes>>
+    = (courseID: number, quarterID: number) =>
+        async (dispatch, getState) => {
+            dispatch({ type: ActionTypesCoursePanel.FETCH_COURSE });
+            let courseCached = getState().coursePanelState.courseCache[courseID];
+            if (courseCached) {
+                let courseLoaded: CoursePanelActionTypes = {
+                    type: ActionTypesCoursePanel.COURSE_LOADED,
+                    payload: {
+                        course: courseCached
+                    }
+                }
+                return dispatch(courseLoaded)
+            }
+            try {
+                let { data: course } = await axios.get<Course>("/courses", { params: { courseID, quarterID } });
+                console.log(course);
+                let courseLoaded: CoursePanelActionTypes = {
+                    type: ActionTypesCoursePanel.COURSE_LOADED,
+                    payload: {
+                        course
+                    }
+                }
+                dispatch(courseLoaded)
+            } catch (err) {
+                let res = err as AxiosError;
+                console.log(res.response);
+                if (res.response) {
+                    dispatch({
+                        type: ActionTypesCoursePanel.COURSE_FAILED, payload: {
+                            errorCode: res.response.data.status, errMessage: res.response.data.msg
+                        }
+                    })
+                } else {
+                    dispatch({
+                        type: ActionTypesCoursePanel.COURSE_FAILED, payload: {
+                            errorCode: 500, errMessage: "Something went wrong!"
+                        }
+                    });
+                }
+            }
+
+        }
+
+
+export function ClosePanel(): CoursePanelActionTypes {
+    return {
+        type: ActionTypesCoursePanel.CLOSE_PANEL
+    }
+} 

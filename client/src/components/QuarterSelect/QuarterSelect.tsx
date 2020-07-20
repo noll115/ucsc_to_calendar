@@ -2,7 +2,7 @@ import React, { useEffect, FC, useState } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from '../../redux'
 import SelectMenu, { Option } from "../SelectMenu/SelectMenu"
-import { fetchQuarters, setQuarter } from "../../redux/actions";
+import { FetchQuarters, setQuarter } from "../../redux/actions";
 import { QuarterSeasons, Quarter } from '../../../../shared/types';
 import "./QuarterSelect.scss"
 
@@ -11,11 +11,11 @@ const mapStateToProps = (state: AppState) => ({
     currentQuarter: state.quarterState.selectedQuarter,
     fetching: state.quarterState.fetching,
     errmessage: state.quarterState.errMessage,
-    code: state.quarterState.code
+    code: state.quarterState.errorCode
 })
 
 const mapDispatchToProps = {
-    fetchQuarters,
+     FetchQuarters,
     setQuarter
 }
 
@@ -67,11 +67,11 @@ function KeyDatePanel(quarter: Quarter | undefined, quarterSeason: QuarterSeason
 }
 
 
-const QuarterSelect: FC<reduxProps> = ({ fetchQuarters, availableQuarters, currentQuarter, setQuarter, fetching }) => {
+const QuarterSelect: FC<reduxProps> = ({ FetchQuarters, availableQuarters, currentQuarter, setQuarter, fetching }) => {
 
     useEffect(() => {
-        fetchQuarters();
-    }, [fetchQuarters])
+        FetchQuarters();
+    }, [FetchQuarters])
 
     const [keyDatesShown, setKeyDatesShown] = useState(false);
     let quarters: Option<QuarterSeasons>[] = [];

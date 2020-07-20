@@ -1,6 +1,7 @@
 import { Reducer } from 'redux';
 import { ActionTypesQuarters, QuarterActionTypes, QuartersState } from "../types/quarter-redux";
 import { CalendarState, CalendarActionTypes, ActionTypesCalendar } from "../types/calendar-redux";
+import { CoursePanelState, CoursePanelActionTypes, ActionTypesCoursePanel } from 'src/types/course-redux';
 
 
 const initialCalendarState: CalendarState = {
@@ -43,7 +44,7 @@ const initialQuarterState: QuartersState = {
     selectedQuarter: "fall",
     fetching: false,
     errMessage: "",
-    code: 0
+    errorCode: 0
 }
 
 export const quarterReducer: Reducer<QuartersState, QuarterActionTypes>
@@ -74,6 +75,35 @@ export const quarterReducer: Reducer<QuartersState, QuarterActionTypes>
                     ...action.payload,
                     fetching: false,
                 }
+            default:
+                return prevState;
+        }
+    }
+
+const initialCoursePanelState: CoursePanelState = {
+    currentCourseViewing: null,
+    fetching: false,
+    courseCache: {},
+    showPanel: false,
+    errMessage: "",
+    errorCode: 0
+}
+
+
+
+export const coursePanelReducer: Reducer<CoursePanelState, CoursePanelActionTypes>
+    = (prevState = initialCoursePanelState, action) => {
+        switch (action.type) {
+            case ActionTypesCoursePanel.CLOSE_PANEL:
+                return { ...prevState, showPanel: false, fetching: false };
+            case ActionTypesCoursePanel.FETCH_COURSE:
+                return { ...prevState, showPanel: true, fetching: true };
+            case ActionTypesCoursePanel.COURSE_LOADED:
+                let { courseCache } = prevState;
+                let { course } = action.payload;
+                return { ...prevState, fetching: false, currentCourseViewing: action.payload.course, courseCache: { ...courseCache, [course.id]: course } };
+            case ActionTypesCoursePanel.COURSE_FAILED:
+                return { ...prevState, ...action.payload, fetching: false }
             default:
                 return prevState;
         }
