@@ -1,0 +1,36 @@
+@import "../../global-styles/font";
+@import "../../global-styles/color";
+
+.results {
+    display: flex;
+    position: absolute;
+    background: $secondary-col;
+    top: 110%;
+    width: 100%;
+    min-height: 2.4rem;
+    border-radius: 14px;
+    align-items: center;
+    ul {
+        height: fit-content;
+        overflow-y: scroll;
+        max-height: 50vh;
+        width: 100%;
+        li {
+            display: inline-block;
+            list-style: none;
+            width: 100%;
+            padding: 10px 20px;
+            &:hover {
+                cursor: pointer;
+            }
+            &.selected{
+                background: #D7E0FF;
+            }
+        }
+    }
+
+    .typeHint {
+        text-align: center;
+        width: 100%;
+    }
+}
