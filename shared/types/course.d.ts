@@ -35,7 +35,7 @@ interface Course {
 interface Courses {
     [index: number]: Course
 }
-                            //cse          -       3          -        01
+
 interface CourseCatalogue { [index: string]: { [index: string]: { [index: string]: number } } }
 
 export { CourseCatalogue, Courses, Course, Labs, Lab, Meeting, TBA };

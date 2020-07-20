@@ -48,17 +48,16 @@ async function GetAllCoursesIDs(quarterID: number): Promise<CourseCatalogue> {
         }
         let courseID = parseInt($("[id^='class_nbr_']", elem).text());
 
-        let [, course, section, fullCourseName] = $("[id^='class_id_']", elem).text().trim().match(/(\w+ \w+) - (\w+)\s+(.+)/);
-        let [subject, courseNum] = course.split(" ");
+        let [, subject,courseNumber, section,] = $("[id^='class_id_']", elem).text().trim().match(/(\w+) (\w+) - (\d+)\s+.+/);
 
         if (courses[subject] === undefined) {
             courses[subject] = {};
         }
         let coursesUnderSubject = courses[subject];
-        if (coursesUnderSubject[courseNum]) {
-            coursesUnderSubject[courseNum][section] = courseID;
+        if (coursesUnderSubject[courseNumber]) {
+            coursesUnderSubject[courseNumber][section] = courseID;
         } else {
-            coursesUnderSubject[courseNum] = { [section]: courseID }
+            coursesUnderSubject[courseNumber] = { [section]: courseID }
         }
     });
     return courses;

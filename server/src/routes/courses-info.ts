@@ -16,6 +16,8 @@ const ValidateQuarter: RequestHandler = async (req, res, next) => {
         const quarter = quarters[season as QuarterSeasons];
         if (quarter.id === queryQuarter) {
             req.quarter = quarter;
+            console.log(quarter);
+
             return next();
         }
     }
@@ -24,18 +26,23 @@ const ValidateQuarter: RequestHandler = async (req, res, next) => {
 
 router.use(ValidateQuarter);
 
-router.get("/:courseID", async (req, res, next) => {
-    let { courseID } = req.params;
+router.get("/", async (req, res, next) => {
+    let courseID = req.query["courseID"] as string;
+    console.log(courseID);
 
     let { quarter } = req;
     let course: Course = null;
     try {
+        
         course = await QueryCourse(quarter.id, quarter.keyDates, courseID);
+        console.log("HI");
+        return res.send(course)
     } catch (error) {
+        console.log(error);
+        
         next(new HttpException(500, `Did not find the course ${courseID}`))
     }
 
-    res.send(course)
 })
 
 
