@@ -48,7 +48,7 @@ async function GetAllCoursesIDs(quarterID: number): Promise<CourseCatalogue> {
         }
         let courseID = parseInt($("[id^='class_nbr_']", elem).text());
 
-        let [, subject,courseNumber, section,] = $("[id^='class_id_']", elem).text().trim().match(/(\w+) (\w+) - (\d+)\s+.+/);
+        let [, subject, courseNumber, section,] = $("[id^='class_id_']", elem).text().trim().match(/(\w+) (\w+) - (\d+)\s+.+/);
 
         if (courses[subject] === undefined) {
             courses[subject] = {};
@@ -104,8 +104,8 @@ function ObtainLabInfos($: CheerioStatic, labPanel: CheerioElement, keyDates: Ke
                 sect: section,
                 meet: {
                     days: meetingDays,
-                    start: startTime,
-                    end: endTime,
+                    startTime: startTime,
+                    endTime: endTime,
                     loc: location
                 },
             };
@@ -125,16 +125,26 @@ function ObtainCourseMeetingInfo(meetingPanel: Cheerio, $: CheerioStatic, keyDat
         const tr = trElems[i];
         let [time, loc, instr, meetingDates] = $("td", tr).toArray().map(el => $(el).text());
         instructor = instr;
-        let [days, timeSlot] = time.split(" ");
-        let meetingDays = UCSCToIcalDays(days);
 
-        let [startTime, endTime] = GetFirstMeeting(keyDates, timeSlot, meetingDays[0])
-        meets.push({
-            days: meetingDays,
-            start: startTime,
-            end: endTime,
-            loc
-        });
+        if (time.trim().length !== 0) {
+            let [days, timeSlot] = time.split(" ");
+
+            let meetingDays = UCSCToIcalDays(days);
+            let [startTime, endTime] = GetFirstMeeting(keyDates, timeSlot, meetingDays[0])
+            meets.push({
+                days: meetingDays,
+                startTime: startTime,
+                endTime: endTime,
+                loc
+            });
+        } else {
+            meets.push({
+                days: [],
+                startTime: "N/A",
+                endTime: "N/A",
+                loc
+            });
+        }
     }
     return [meets, instructor];
 }

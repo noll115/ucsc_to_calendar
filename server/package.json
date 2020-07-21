@@ -4,8 +4,9 @@
   "description": "extract class times to be automatically put into google calendar",
   "main": "index.js",
   "scripts": {
-    "start": "node build/server/src/index.js",
-    "prestart": "tsc"
+    "start": "nodemon build/server/src/index.js",
+    "prestart": "tsc",
+    "watch-and-run": "tsc -w & nodemon -w build build/server/src/index.js"
   },
   "keywords": [
     "ucsc",
@@ -33,6 +34,7 @@
     "@types/express": "^4.17.6",
     "@types/helmet": "0.0.47",
     "@types/node": "^14.0.14",
+    "nodemon": "^2.0.4",
     "typescript": "^3.9.7"
   }
 }

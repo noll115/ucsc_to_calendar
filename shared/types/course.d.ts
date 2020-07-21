@@ -4,9 +4,9 @@ type TBA = "TBA"
 type NA = "N/A"
 
 interface Meeting {
-    days: day[],
-    start: Date,
-    end: Date,
+    days: day[]
+    startTime: Date | NA
+    endTime: Date | NA
     loc: string
 }
 
@@ -27,7 +27,7 @@ interface Course {
     type: string, // "lecture"
     id: number,
     inst: string, //instructor
-    meets: Meeting[] | TBA, //times meeting
+    meets: Meeting[], //times meeting
     labs: Labs | null
 }
 

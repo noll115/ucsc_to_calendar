@@ -31,8 +31,11 @@ const inputRegex = /(\w+)\s*(\w*)\s*-*\s*(\d*)\s*/i;
 
 
 const CourseSearch: FC<reduxProps> = ({ courses }) => {
+    console.log(courses["CSE"]);
 
     let [results, setResults] = useState<{ sub: string, courseNum: string, section: string }[] | null>(null);
+    console.log(results);
+
     let [showResults, setShowResults] = useState(false);
     let [cursor, setCursor] = useState(-1);
 
@@ -127,10 +130,13 @@ const CourseSearch: FC<reduxProps> = ({ courses }) => {
 
     useEffect(() => {
         document.addEventListener('mousedown', handleClickedOutside)
+        setResults(null)
+        if (inputRef.current)
+            inputRef.current.value = "";
         return () => {
             document.removeEventListener('mousedown', handleClickedOutside)
         }
-    }, [courseInputRef])
+    }, [courseInputRef, courses])
 
 
 
