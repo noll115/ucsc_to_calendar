@@ -1,0 +1,21 @@
+@import "../../global-styles/color";
+@import "../../global-styles/font";
+
+.btn {
+    background: none;
+    border: $accent-col 1px solid;
+    padding: 6px 19px;
+    color: $accent-col;
+    font-family: $sans;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: 600;
+
+    &:hover {
+        background: $secondary-col;
+    }
+    &:disabled {
+        color: #96d8ff;
+        border-color: #96d8ff;
+    }
+}
