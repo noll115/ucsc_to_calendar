@@ -1,0 +1,35 @@
+div.keyDataInfo {
+    width: 70%;
+    &>div {
+        &:first-child{
+            font-size: 1.1em;
+        }
+        &:not(:first-child) {
+            margin-top: 25px;
+        }
+
+        p:first-child {
+            font-weight: 500;
+        }
+
+        &:nth-child(2) {
+            display: inline-block;
+            width: 60%;
+            span {
+                display: inline-block;
+                width: 50%;
+                &:first-of-type {
+                    text-align: left;
+                }
+                div {
+                    margin-top: 5px;
+                }
+            }
+        }
+
+    }
+    .btn{
+        margin: 20px 0 0 0;
+    }
+
+}

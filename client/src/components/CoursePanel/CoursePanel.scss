@@ -1,0 +1,61 @@
+div.coursePanel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    p:first-of-type,
+    & > div > span {
+        font-weight: 500;
+    }
+    & > div {
+        margin-bottom: 6px;
+    }
+
+    .sectionDisplay {
+        margin-bottom: 20px;
+        & > div:first-of-type {
+            text-align: left;
+        }
+        > div {
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .sectionLabels {
+            display: flex;
+            margin-bottom: 5px;
+            color: #7aa7ff;
+            span:nth-child(1) {
+                flex: 0 0 21%;
+            }
+            span:nth-child(2) {
+                flex: 0 0 51%;
+            }
+            span:nth-child(3) {
+                flex: 1 0 20%;
+            }
+        }
+        .sectionList {
+            .section {
+                display: flex;
+                padding: 5px 0px;
+                cursor: pointer;
+
+                span:nth-child(1) {
+                    flex: 0 0 21%;
+                }
+                span:nth-child(2) {
+                    flex: 0 0 51%;
+                }
+                span:nth-child(3) {
+                    flex: 1 0 20%;
+                }
+                &:hover {
+                    background: #96d8ff;
+                }
+                &.selected {
+                    background: #20a4f3;
+                }
+            }
+        }
+    }
+
+}
