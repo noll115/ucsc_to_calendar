@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { Course, CourseCatalogue, Meeting, KeyDates, Labs, Lab } from "../../../shared/types";
+import { Course, CourseCatalogue, Meeting, KeyDates, LabsInfo, Lab } from "../../../shared/types";
 import { GetFirstMeeting, UCSCToIcalDays } from "./helper-functions";
 import cheerio from "cheerio";
 import { courseSearchURL } from "./url-constants";
@@ -64,8 +64,8 @@ async function GetAllCoursesIDs(quarterID: number): Promise<CourseCatalogue> {
 }
 
 
-function ObtainLabInfos($: CheerioStatic, labPanel: CheerioElement, keyDates: KeyDates): Labs {
-    let labsAvailable: Labs = { type: '' };
+function ObtainLabInfos($: CheerioStatic, labPanel: CheerioElement, keyDates: KeyDates): LabsInfo {
+    let labsAvailable: LabsInfo = { type: '', labs: [] };
     let labs = $(labPanel).children();
 
     let labTitleRegex = /#(\d+) (\w+) (\w+)/;
@@ -96,7 +96,7 @@ function ObtainLabInfos($: CheerioStatic, labPanel: CheerioElement, keyDates: Ke
         else {
             let meetingDays = UCSCToIcalDays(days);
             let [, location] = $(labInfo[3]).text().split(": ");
-
+            location = /^\s*$/.test(location) ? "N/A" : location;
             let [startTime, endTime] = GetFirstMeeting(keyDates, timeSlot, meetingDays[0])
 
             labDetail = {
@@ -110,7 +110,7 @@ function ObtainLabInfos($: CheerioStatic, labPanel: CheerioElement, keyDates: Ke
                 },
             };
         }
-        labsAvailable[labDetail.id] = labDetail;
+        labsAvailable.labs.push(labDetail);
     })
 
     return labsAvailable;
@@ -171,7 +171,7 @@ async function QueryCourse(quarterID: number, keyDates: KeyDates, courseID: stri
     let headingText = $(heading).text();
     let meets: Meeting[] = [];
     let instructor: string = "";
-    let labs = null;
+    let labs: LabsInfo = { labs: [], type: '' };
     if (headingText.includes("Labs")) {
         labs = ObtainLabInfos($, body, keyDates);
         let meetingPanel = $(panels[panels.length - 2]).children().get(1);

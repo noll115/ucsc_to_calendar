@@ -27,13 +27,12 @@ router.use(ValidateQuarter);
 router.get("/", async (req, res, next) => {
     let courseID = req.query["courseID"] as string;
     
-    console.log(courseID);
     let { quarter } = req;
     let course: Course = null;
     try {
         
         course = await QueryCourse(quarter.id, quarter.keyDates, courseID);
-        console.log(course);
+        console.log(course.fullName);
         return res.send(course)
     } catch (error) {
         console.log(error);

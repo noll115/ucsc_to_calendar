@@ -42,10 +42,7 @@ async function ObtainRecentQuarters(): Promise<RecentQuarters> {
 function parseKeyDates(date: string, year: number) {
     let dates: Date[] = [];
     if (date.indexOf("-") !== -1) {
-        console.log(date);
-
         let [, month, firstDay, lastDay] = /(\d+)\/(\d+)-(\d+).*/.exec(date);
-        console.log(`${month} ${firstDay} ${lastDay}`);
 
         let firstDayNum = parseInt(firstDay);
         let lastDayNum = parseInt(lastDay);

@@ -5,9 +5,9 @@ type NA = "N/A"
 
 interface Meeting {
     days: day[]
-    startTime: Date | NA
-    endTime: Date | NA
-    loc: string
+    startTime: Date | string | NA
+    endTime: Date | string | NA
+    loc: string | NA
 }
 
 interface Lab {
@@ -16,8 +16,8 @@ interface Lab {
     meet: Meeting | TBA | NA,
 }
 
-interface Labs {
-    [index: number]: Lab,
+interface LabsInfo {
+    labs: Lab[]
     type: string
 }
 interface Course {
@@ -28,7 +28,7 @@ interface Course {
     id: number,
     inst: string, //instructor
     meets: Meeting[], //times meeting
-    labs: Labs | null
+    labs: LabsInfo
 }
 
 
@@ -38,4 +38,4 @@ interface Courses {
 
 interface CourseCatalogue { [index: string]: { [index: string]: { [index: string]: number } } }
 
-export { CourseCatalogue, Courses, Course, Labs, Lab, Meeting, TBA };
+export { CourseCatalogue, Courses, Course, LabsInfo, Lab, Meeting, TBA };

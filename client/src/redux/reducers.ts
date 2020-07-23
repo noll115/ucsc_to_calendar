@@ -1,7 +1,8 @@
 import { Reducer } from 'redux';
 import { ActionTypesQuarters, QuarterActionTypes, QuartersState } from "../types/quarter-redux";
 import { CalendarState, CalendarActionTypes, ActionTypesCalendar } from "../types/calendar-redux";
-import { CoursePanelState, CoursePanelActionTypes, ActionTypesCoursePanel } from 'src/types/course-redux';
+import { CoursePanelState, CoursePanelActionTypes, ActionTypesCoursePanel } from 'src/types/coursePanel-redux';
+import { CourseSearchState, CourseSearchActionTypes, ActionTypesCourseSearch } from "src/types/courseSearch-redux";
 
 
 const initialCalendarState: CalendarState = {
@@ -43,6 +44,7 @@ const initialQuarterState: QuartersState = {
     availableQuarters: {},
     selectedQuarter: "fall",
     fetching: false,
+    showKeyDates: false,
     errMessage: "",
     errorCode: 0
 }
@@ -74,6 +76,11 @@ export const quarterReducer: Reducer<QuartersState, QuarterActionTypes>
                     ...prevState,
                     ...action.payload,
                     fetching: false,
+                }
+            case ActionTypesQuarters.SET_SHOW_KEYDATES:
+                return {
+                    ...prevState,
+                    showKeyDates: action.payload.show
                 }
             default:
                 return prevState;
@@ -109,3 +116,39 @@ export const coursePanelReducer: Reducer<CoursePanelState, CoursePanelActionType
         }
     }
 
+
+
+const initialCourseSearchState: CourseSearchState = {
+    coursesResults: null,
+    cursor: -1,
+    currentCourse: null,
+    showResults: false
+}
+
+
+export const CourseSearchReducer: Reducer<CourseSearchState, CourseSearchActionTypes>
+    = (prevState = initialCourseSearchState, action) => {
+        switch (action.type) {
+            case ActionTypesCourseSearch.CURSOR_UP:
+                if (prevState.coursesResults) {
+                    let { cursor, coursesResults } = prevState;
+                    let nextCursorLoc = cursor > 0 ? --cursor : cursor;
+                    return { ...prevState, cursor: nextCursorLoc, currentCourse: coursesResults[nextCursorLoc] };
+                }
+                return prevState;
+            case ActionTypesCourseSearch.CURSOR_DOWN:
+                if (prevState.coursesResults) {
+                    let { cursor, coursesResults } = prevState;
+                    let nextCursorLoc = cursor < coursesResults.length - 1 ? ++cursor : cursor;
+                    return { ...prevState, cursor: nextCursorLoc, currentCourse: coursesResults[nextCursorLoc] };
+                }
+                return prevState;
+            case ActionTypesCourseSearch.SET_RESULTS:
+                return { ...prevState, coursesResults: action.payload.courseResults, cursor: -1, currentCourse: null }
+
+            case ActionTypesCourseSearch.SET_SHOW_RESULTS:
+                return { ...prevState, showResults: action.payload.show }
+            default:
+                return prevState;
+        }
+    }

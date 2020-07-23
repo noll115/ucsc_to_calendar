@@ -1,12 +1,13 @@
 import { createStore, applyMiddleware, combineReducers } from 'redux'
 import { composeWithDevTools } from 'redux-devtools-extension'
-import { calendarReducer, quarterReducer, coursePanelReducer } from './reducers'
+import { calendarReducer, quarterReducer, coursePanelReducer, CourseSearchReducer } from './reducers'
 import thunk from 'redux-thunk'
 
 const rootReducer = combineReducers({
     calendarState: calendarReducer,
     quarterState: quarterReducer,
-    coursePanelState: coursePanelReducer
+    coursePanelState: coursePanelReducer,
+    courseSearchState: CourseSearchReducer
 });
 
 export type AppState = ReturnType<typeof rootReducer>

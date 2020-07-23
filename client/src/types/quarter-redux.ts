@@ -7,6 +7,7 @@ export enum ActionTypesQuarters {
     QUARTERS_REQUESTED = "QUARTERS_REQ",
     QUARTERS_SUCCESS = "QUARTERS_SUC",
     QUARTERS_FAILED = "QUARTERS_FAIL",
+    SET_SHOW_KEYDATES = "SET_SHOW_KEYDATES"
 }
 
 interface SelectQuarterAction
@@ -24,7 +25,7 @@ interface SuccessFetchAvailQuartersAction
     extends Action<ActionTypesQuarters.QUARTERS_SUCCESS> {
     payload: {
         availableQuarters: Quarters,
-        quarterSeason:QuarterSeasons
+        quarterSeason: QuarterSeasons
     }
 }
 
@@ -37,12 +38,25 @@ interface FailFetchAvailQuartersAction
     }
 }
 
+interface SetShowKeydates
+    extends Action<ActionTypesQuarters.SET_SHOW_KEYDATES> {
+    payload: {
+        show: boolean
+    }
+}
+
 export interface QuartersState {
     availableQuarters: Quarters,
     selectedQuarter: QuarterSeasons,
     fetching: boolean,
+    showKeyDates: boolean,
     errMessage: string,
     errorCode: Number
 }
 
-export type QuarterActionTypes = SelectQuarterAction | SuccessFetchAvailQuartersAction | FailFetchAvailQuartersAction | FetchAvailQuartersAction;
+export type QuarterActionTypes =
+    SelectQuarterAction
+    | SuccessFetchAvailQuartersAction
+    | FailFetchAvailQuartersAction
+    | FetchAvailQuartersAction
+    | SetShowKeydates

@@ -6,7 +6,8 @@ import { ActionCreator } from 'redux'
 import { ThunkAction } from 'redux-thunk';
 import { AppState } from '.';
 import axios, { AxiosError } from "axios";
-import { CoursePanelActionTypes, ActionTypesCoursePanel } from "src/types/course-redux";
+import { CoursePanelActionTypes, ActionTypesCoursePanel } from "src/types/coursePanel-redux";
+import { CourseSearchActionTypes, ActionTypesCourseSearch } from "src/types/courseSearch-redux";
 
 
 export function addCourse(course: Course, quarter: QuarterSeasons): CalendarActionTypes {
@@ -37,6 +38,16 @@ export function setQuarter(quarterSeason: QuarterSeasons): QuarterActionTypes {
         type: ActionTypesQuarters.SELECT_QUARTER,
         payload: {
             quarterSeason
+        }
+    }
+}
+
+
+export function SetShowKeyDate(show: boolean): QuarterActionTypes {
+    return {
+        type: ActionTypesQuarters.SET_SHOW_KEYDATES,
+        payload: {
+            show
         }
     }
 }
@@ -127,4 +138,31 @@ export function ClosePanel(): CoursePanelActionTypes {
     return {
         type: ActionTypesCoursePanel.CLOSE_PANEL
     }
-} 
+}
+
+
+export function CursorUp(): CourseSearchActionTypes {
+    return {
+        type: ActionTypesCourseSearch.CURSOR_UP
+    }
+}
+export function CursorDown(): CourseSearchActionTypes {
+    return {
+        type: ActionTypesCourseSearch.CURSOR_DOWN
+    }
+}
+export function SetResults(results: { sub: string, courseNum: string, section: string }[] | null): CourseSearchActionTypes {
+    return {
+        type: ActionTypesCourseSearch.SET_RESULTS,
+        payload: { courseResults: results }
+    }
+}
+
+export function SetShowResults(show: boolean): CourseSearchActionTypes {
+    return {
+        type: ActionTypesCourseSearch.SET_SHOW_RESULTS,
+        payload: {
+            show
+        }
+    }
+}
