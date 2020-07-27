@@ -38,4 +38,4 @@ interface Courses {
 
 interface CourseCatalogue { [index: string]: { [index: string]: { [index: string]: number } } }
 
-export { CourseCatalogue, Courses, Course, LabsInfo, Lab, Meeting, TBA };
+export {NA,TBA, CourseCatalogue, Courses, Course, LabsInfo, Lab, Meeting };

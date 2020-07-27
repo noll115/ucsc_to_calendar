@@ -3,6 +3,9 @@ import './App.scss';
 import { QuarterSelect, SlugHeader, CourseSearch } from './components';
 import CoursePanel from './components/CoursePanel/CoursePanel';
 import KeyDatePanel from './components/KeyDatePanel/KeyDatePanel';
+import CoursesSelectedList from './components/CoursesSelectedList/CoursesSelectedList';
+
+
 function App() {
   return (
     <div className="App">
@@ -11,7 +14,9 @@ function App() {
         <QuarterSelect />
         <CourseSearch />
       </div>
-      <div className="container"></div>
+      <div className="container">
+        <CoursesSelectedList />
+      </div>
       <div className="container"></div>
       <CoursePanel />
       <KeyDatePanel />

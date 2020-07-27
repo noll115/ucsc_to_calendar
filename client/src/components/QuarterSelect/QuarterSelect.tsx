@@ -6,6 +6,7 @@ import { FetchQuarters, setQuarter, SetShowKeyDate } from "../../redux/actions";
 import { QuarterSeasons } from '../../../../shared/types';
 import Button from "../Button/Button";
 import "./QuarterSelect.scss"
+import Loading from '../Loading/Loading';
 
 const mapStateToProps = (state: AppState) => ({
     quarterState: state.quarterState
@@ -50,7 +51,7 @@ const QuarterSelect: FC<reduxProps> = ({ FetchQuarters, setQuarter, SetShowKeyDa
                     options={quarters}
                     onClickOption={onOptionClick}
                 />
-                {!fetching ? <Button onClick={setShowPanel}>Key Dates</Button> : null}
+                {!fetching ? <Button onClick={setShowPanel}>Key Dates</Button> : <Loading />}
             </span>
         </div >
     )

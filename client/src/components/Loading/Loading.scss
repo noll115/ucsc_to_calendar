@@ -1,0 +1,43 @@
+@import "../../global-styles/color";
+
+.loading {
+    margin: 0 auto;
+    position: relative;
+    &,
+    &::after,
+    &::before {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: $accent-col;
+        animation: bounce 0.5s infinite ease-in-out alternate;
+    }
+
+    &::after,
+    &::before {
+        position: absolute;
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+    }
+
+    &::after {
+        content: "";
+        left: 1.3rem;
+        animation-delay: 0.32s;
+    }
+    &::before {
+        content: "";
+        left: -1.3rem;
+        animation-delay: -0.32s;
+    }
+}
+
+@keyframes bounce {
+    0% {
+        background: $accent-col;
+    }
+    100% {
+        background: #a9d0e7;
+    }
+}

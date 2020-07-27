@@ -10,26 +10,32 @@ export enum ActionTypesCalendar {
 
 }
 
+export interface CourseAdded {
+    course: Course,
+    labChosen: number
+}
+
 
 interface AddCourseAction
     extends Action<ActionTypesCalendar.Add_COURSE> {
     payload: {
-        course: Course,
-        quarter: QuarterSeasons
+        newCourse: CourseAdded,
+        quarter: QuarterSeasons,
+        isNew: boolean
     }
 }
 
 interface RemoveCourseAction
     extends Action<ActionTypesCalendar.REMOVE_COURSE> {
     payload: {
-        classID: number
+        courseID: number
         quarter: QuarterSeasons
     }
 }
 
 
 export type CalendarState = {
-    calendars: { [key in QuarterSeasons]: Course[] }
+    calendars: { [key in QuarterSeasons]: CourseAdded[] }
 }
 
 

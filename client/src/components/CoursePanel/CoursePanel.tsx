@@ -1,18 +1,29 @@
-import React, { FC, useState } from 'react'
+import React, { FC, useState, Fragment, useEffect } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from 'src/redux';
-import { ClosePanel } from "../../redux/actions";
-import "./CoursePanel.scss";
-import { Meeting, Course } from '../../../../shared/types';
+import { ClosePanel, addCourse } from "../../redux/actions";
+import { Meeting } from '../../../../shared/types';
+import { CourseAdded } from "../../types/calendar-redux"
 import Modal from "../Modal/Modal";
 import Button from '../Button/Button';
+import "./CoursePanel.scss";
+import Loading from '../Loading/Loading';
 
-const mapStateToProps = (state: AppState) => ({
-    coursePanelState: state.coursePanelState
-})
+
+const mapStateToProps = (state: AppState) => {
+    let { calendars } = state.calendarState;
+    let quarterSeason = state.quarterState.selectedQuarter;
+    let coursesAlreadyAdded = calendars[quarterSeason];
+    return {
+        coursePanelState: state.coursePanelState,
+        quarterSeason,
+        coursesAlreadyAdded
+    }
+}
 
 const mapDispatchToProps = {
-    ClosePanel
+    ClosePanel,
+    addCourse
 }
 
 const connected = connect(mapStateToProps, mapDispatchToProps);
@@ -28,114 +39,125 @@ const FullDays: Record<string, string> = {
     FR: "Friday",
     SA: "Saturday"
 }
-const iCalDates = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
-const UCSCDates = ["Su", "M", "Tu", "W", "Th", "F", "Sa"];
 
+const CoursePanel: FC<ReduxProps> = ({ ClosePanel, addCourse, coursePanelState, quarterSeason, coursesAlreadyAdded }) => {
 
-let test: Course = {
-    fullName: "Personal Computer Concepts: Software and Hardware",
-    id: 22264,
-    inst: "Moulds,G.B.",
-    labs: {
-        labs: [
-            {
-                id: 22682, sect: "01A", meet: {
-                    days: ["TU"],
-                    endTime: "2020-06-24T01:30:00.000Z",
-                    loc: "N/A",
-                    startTime: "2020-06-24T00:00:00.000Z"
-                }
-            },
-            {
-                id: 22683, sect: "01B", meet: {
-                    days: ["TH"],
-                    endTime: "2020-06-24T01:30:00.000Z",
-                    loc: "Soc Sci 1 145",
-                    startTime: "2020-06-24T00:00:00.000Z"
-                }
-            },
-        ],
-        type: "LBS"
-    },
-    meets: [{
-        days: ["TU", "TH"],
-        endTime: "2020-10-06T20:15:00.000Z",
-        loc: "Remote Instruction",
-        startTime: "2020-10-06T18:40:00.000Z"
-    }],
-    sect: "01",
-    shortName: "CSE 3",
-    type: "Lecture"
-};
-
-function IcalToUCSC(days: string[]) {
-    return days.map((str, i) => {
-        let index = iCalDates.indexOf(str);
-        return UCSCDates[index];
-    });
-}
-
-
-
-const CoursePanel: FC<ReduxProps> = ({ ClosePanel, coursePanelState }) => {
     let { currentCourseViewing, errorCode, errMessage, fetching, showPanel } = coursePanelState;
-    let { fullName, id, inst, labs: { labs, type: labType }, meets, sect, shortName, type } = currentCourseViewing ? currentCourseViewing : test;
+    let [selectedIndex, setSelectedIndex] = useState(-1);
+
+    let courseInCalendar = coursesAlreadyAdded.find(({ course }) => course.id === currentCourseViewing?.id);
+
+    useEffect(() => {
+        if (courseInCalendar)
+            setSelectedIndex(courseInCalendar.labChosen);
+        else
+            setSelectedIndex(-1);
+    }, [currentCourseViewing])
+
+    if (!showPanel) {
+        return null
+    }
+
+    if (fetching || !currentCourseViewing) {
+        return <Modal><Loading /></Modal>;
+    }
+
+    let { fullName, id, inst, labs: { labs, type: labType }, meets, sect, shortName, type } = currentCourseViewing;
     let days = meets.map(m => m.days.map(day => FullDays[day])).join();
 
 
-    let [selectedIndex, setSelectedIndex] = useState(-1);
 
-    let meetingTime = meets.map(m => {
-        let startTime = new Date(m.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        let endTime = new Date(m.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        return `${startTime} - ${endTime}`
+    let meetingTime = meets.map(({ startTime, endTime }) => {
+        if (startTime === "N/A" && endTime === "N/A") {
+            return "N/A"
+        }
+        let startTimeStr = (startTime as Date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        let endTimeStr = (endTime as Date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return `${startTimeStr} - ${endTimeStr}`
     }).join();
-    let locations = meets.map(m => m.loc).join();
+
+    let locations = meets[0].loc === "N/A" ? "N/A" : meets.map(m => m.loc).join();
 
     let sections = labs.map((lab, i) => {
         let { meet } = lab;
+        if (meet === "N/A") {
+            return (
+                <div key={i} onClick={() => { setSelectedIndex(i) }} className={`section ${selectedIndex === i ? "selected" : ""}`}>
+                    <span>{`${labType} ${lab.sect}`}</span>
+                    <span>N/A</span>
+                    <span>N/A</span>
+                </div>)
+        }
         let { days, endTime, startTime, loc } = meet as Meeting;
-        let startTimeStr = new Date(startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        let endTimeStr = new Date(endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        let startTimeStr = (startTime as Date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        let endTimeStr = (endTime as Date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        let totalTimeStr = `${days.join()} ${startTimeStr}-${endTimeStr}`;
+
         return (
-            <div onClick={() => { setSelectedIndex(i) }} className={`section ${selectedIndex === i ? "selected" : ""}`}>
+            <div key={i} onClick={() => { setSelectedIndex(i) }} className={`section ${selectedIndex === i ? "selected" : ""}`}>
                 <span>{`${labType} ${lab.sect}`}</span>
-                <span>{`${IcalToUCSC(days).join()} ${startTimeStr}-${endTimeStr}`}</span>
+                <span>{totalTimeStr}</span>
                 <span>{loc}</span>
             </div>
         )
     })
+    console.log(courseInCalendar);
 
+    let addBtn = () => {
+        if (currentCourseViewing) {
+            addCourse({ course: currentCourseViewing, labChosen: selectedIndex }, quarterSeason, courseInCalendar === undefined);
+            ClosePanel();
+        }
+    }
+
+    let closeBtn = () => {
+        ClosePanel();
+    }
+
+    let hasSections = sections.length > 0;
     return (
-        <Modal styleName="coursePanel">
-            <p>{`${shortName} - ${sect}`}</p>
-            <br />
-            <div><span>Course Name:</span> {fullName}</div>
-            <div><span>Instructor:</span> {inst}</div>
-            <div> <span>Class Number:</span> {id}</div>
-            <br />
-            <div><span> Meeting Days:</span> {days}</div>
-            <div><span> Meeting Times:</span> {meetingTime}</div>
-            <div><span> Location:</span> {locations}</div>
-            <div className="sectionDisplay">
+        <Modal styleName="coursePanel" >
+            <Button onClick={closeBtn} additionalClasses="exit"><i className="fas fa-times fa-2x"></i></Button>
+            <div className="courseInfo">
                 <div>
-                    <span>Sections </span>
-                    <span>Select one</span>
+                    <p>{`${shortName} - ${sect}`}</p>
                 </div>
-
                 <div>
-                    <div className="sectionLabels">
-                        <span>Section</span>
-                        <span>Time</span>
-                        <span>Location</span>
+                    <div><label>Course Name:</label> <div>{fullName}</div></div>
+                    <div><label>Instructor:</label> {inst}</div>
+                    <div> <label>Class Number:</label> {id}</div>
+                </div>
+                <div>
+                    <div><label> Meeting Days:</label> {days}</div>
+                    <div><label> Meeting Times:</label> {meetingTime}</div>
+                    <div><label> Location:</label> {locations}</div>
+                </div>
+            </div>
+            {hasSections &&
+                <Fragment>
+                    < div className="sectionLabels">
+                        <div>
+                            <span>Sections: </span>
+                            <span>Select one</span>
+                        </div>
+                        <div>
+                            <span>Section</span>
+                            <span>Time</span>
+                            <span>Location</span>
+                        </div>
                     </div>
                     <div className="sectionList">
                         {sections}
                     </div>
-                </div>
-            </div>
-            <Button disabled={selectedIndex === -1} onClick={() => { }}>Add</Button>
-        </Modal>
+                </Fragment>
+            }
+            {
+                courseInCalendar ?
+                    <Button onClick={selectedIndex !== courseInCalendar.labChosen ? addBtn : undefined} disabled={selectedIndex === courseInCalendar.labChosen} >{selectedIndex !== courseInCalendar.labChosen ? "change" : "Already In Calendar"}</Button>
+                    : <Button onClick={addBtn}>Add</Button>
+            }
+        </Modal >
     )
 }
 

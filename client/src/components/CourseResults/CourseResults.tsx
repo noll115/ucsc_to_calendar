@@ -49,27 +49,27 @@ interface props extends reduxProps {
 
 
 const CourseResults: FC<props> = ({ courseSearchState: { cursor, coursesResults, showResults }, SetShowResults, courses, FetchCourse, quarterID }) => {
-    console.log(cursor);
-    const listRef = useRef<HTMLUListElement>(null);
 
-    if (showResults) {
-        let onClickItem = (course: { sub: string, courseNum: string, section: string }) => {
-            if (!courses) return;
-            let courseID = courses[course.sub][course.courseNum][course.section];
-            SetShowResults(false);
-            FetchCourse(courseID, quarterID);
-        }
-
-        return (
-            <div className="results">
-                {coursesResults ?
-                    <ul ref={listRef}>
-                        {coursesResults.map((str, i) => <Li key={i} course={str} selected={i === cursor} onClick={onClickItem} />)}
-                    </ul> : <div className="typeHint">Need at least 2 or more characters</div>}
-            </div>
-        )
+    if (!showResults) {
+        return null;
     }
-    return null;
+
+    let onClickItem = (course: { sub: string, courseNum: string, section: string }) => {
+        if (!courses) return;
+        let courseID = courses[course.sub][course.courseNum][course.section];
+        SetShowResults(false);
+        FetchCourse(courseID, quarterID);
+    };
+
+    return (
+        <div className="results">
+            {coursesResults ?
+                <ul >
+                    {coursesResults.map((str, i) => <Li key={i} course={str} selected={i === cursor} onClick={onClickItem} />)}
+                </ul> 
+                : <div className="typeHint">Need at least 2 or more characters</div>}
+        </div>
+    )
 }
 
 

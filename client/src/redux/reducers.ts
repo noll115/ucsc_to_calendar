@@ -18,17 +18,22 @@ export const calendarReducer: Reducer<CalendarState, CalendarActionTypes>
     = (prevState = initialCalendarState, action) => {
         switch (action.type) {
             case ActionTypesCalendar.Add_COURSE:
-                let prevCourses = prevState.calendars[action.payload.quarter];
+                let { newCourse, isNew } = action.payload;
+                
+                let prevCoursesAdded = prevState.calendars[action.payload.quarter];
+                if (!isNew) {
+                    prevCoursesAdded = prevCoursesAdded.filter(({ course }) => course.id !== newCourse.course.id)
+                }
                 return {
                     calendars: {
-                        [action.payload.quarter]: [...prevCourses, action.payload.course],
-                        ...prevState.calendars
+                        ...prevState.calendars,
+                        [action.payload.quarter]: [...prevCoursesAdded, newCourse]
                     }
                 };
             case ActionTypesCalendar.REMOVE_COURSE:
-                let { classID, quarter } = action.payload
+                let { courseID, quarter } = action.payload
                 let prevCalendar = prevState.calendars[quarter];
-                let newCalendar = prevCalendar.filter(course => course.id !== classID);
+                let newCalendar = prevCalendar.filter(({ course }) => course.id !== courseID);
                 return {
                     calendars: {
                         [quarter]: newCalendar,
@@ -102,7 +107,7 @@ export const coursePanelReducer: Reducer<CoursePanelState, CoursePanelActionType
     = (prevState = initialCoursePanelState, action) => {
         switch (action.type) {
             case ActionTypesCoursePanel.CLOSE_PANEL:
-                return { ...prevState, showPanel: false, fetching: false };
+                return { ...prevState, showPanel: false, fetching: false, currentCourseViewing: null };
             case ActionTypesCoursePanel.FETCH_COURSE:
                 return { ...prevState, showPanel: true, fetching: true };
             case ActionTypesCoursePanel.COURSE_LOADED:

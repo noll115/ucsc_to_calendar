@@ -8,16 +8,22 @@ import CoursePanel from '../CoursePanel/CoursePanel'
 
 const mapStateToProps = (state: AppState) => {
     let { selectedQuarter } = state.quarterState;
+    let { coursesResults } = state.courseSearchState;
     let quarter = state.quarterState.availableQuarters[selectedQuarter];
     return {
         courses: quarter ? quarter.courses : {},
         quarterID: quarter?.id,
-        courseSearchState: state.courseSearchState
+        courseSearchState: state.courseSearchState,
+        coursesResults
     }
 }
 
 const mapDispatchToProps = {
-    CursorUp, CursorDown, SetResults, FetchCourse, SetShowResults
+    CursorUp,
+    CursorDown,
+    SetResults,
+    FetchCourse,
+    SetShowResults
 }
 
 const connected = connect(mapStateToProps, mapDispatchToProps);
@@ -29,13 +35,14 @@ const inputRegex = /(\w+)\s*(\w*)\s*-*\s*(\d*)\s*/i;
 
 
 
-const CourseSearch: FC<reduxProps> = ({ FetchCourse, CursorDown, CursorUp, SetResults, SetShowResults, courseSearchState, courses, quarterID }) => {
+const CourseSearch: FC<reduxProps> = ({ FetchCourse, CursorDown, CursorUp, SetResults, SetShowResults, coursesResults, courseSearchState, courses, quarterID }) => {
     let { currentCourse, showResults } = courseSearchState
 
     let onChange = (e: ChangeEvent<HTMLInputElement>) => {
         let input = e.target.value;
         if (input.length < 2) {
-            SetResults(null)
+            if (coursesResults !== null)
+                SetResults(null)
             return;
         }
         let regexResults = input.match(inputRegex);
@@ -122,6 +129,7 @@ const CourseSearch: FC<reduxProps> = ({ FetchCourse, CursorDown, CursorUp, SetRe
 
     useEffect(() => {
         const handleClickedOutside = (e: MouseEvent) => {
+
             if (courseInputRef.current && !courseInputRef.current.contains(e.target as Node)) {
                 showResults !== false && SetShowResults(false)
             }
@@ -129,15 +137,21 @@ const CourseSearch: FC<reduxProps> = ({ FetchCourse, CursorDown, CursorUp, SetRe
                 showResults !== true && SetShowResults(true)
             }
         }
-        SetResults(null)
-
         document.addEventListener('mousedown', handleClickedOutside)
-        if (inputRef.current)
-            inputRef.current.value = "";
         return () => {
             document.removeEventListener('mousedown', handleClickedOutside)
         }
-    }, [courseInputRef, courses, SetShowResults,SetResults,showResults])
+    }, [courseInputRef, SetShowResults, showResults])
+
+    useEffect(() => {
+        if (inputRef.current)
+            inputRef.current.value = "";
+    }, [quarterID])
+
+    useEffect(() => {
+        if (coursesResults !== null && inputRef.current?.value === "")
+            SetResults(null)
+    }, [coursesResults, SetResults, courses])
 
 
 

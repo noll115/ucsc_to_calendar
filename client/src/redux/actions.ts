@@ -1,5 +1,5 @@
 import { ActionTypesQuarters, QuarterActionTypes } from "../types/quarter-redux";
-import { CalendarActionTypes, ActionTypesCalendar } from "../types/calendar-redux";
+import { CalendarActionTypes, ActionTypesCalendar, CourseAdded } from "../types/calendar-redux";
 
 import { Course, QuarterSeasons, RecentQuarters } from '../../../shared/types';
 import { ActionCreator } from 'redux'
@@ -10,22 +10,23 @@ import { CoursePanelActionTypes, ActionTypesCoursePanel } from "src/types/course
 import { CourseSearchActionTypes, ActionTypesCourseSearch } from "src/types/courseSearch-redux";
 
 
-export function addCourse(course: Course, quarter: QuarterSeasons): CalendarActionTypes {
+export function addCourse(course: CourseAdded, quarter: QuarterSeasons, isNew: boolean): CalendarActionTypes {
     return {
         type: ActionTypesCalendar.Add_COURSE,
         payload: {
-            course,
-            quarter
+            newCourse: course,
+            quarter,
+            isNew
         }
     }
 }
 
 
-export function removeCourse(classID: number, quarter: QuarterSeasons): CalendarActionTypes {
+export function removeCourse(courseID: number, quarter: QuarterSeasons): CalendarActionTypes {
     return {
         type: ActionTypesCalendar.REMOVE_COURSE,
         payload: {
-            classID,
+            courseID,
             quarter
         }
     }
@@ -89,6 +90,20 @@ export const FetchQuarters: ActionCreator<ThunkAction<void, AppState, null, Quar
         }
 
 
+
+const iCalDates = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+const UCSCDates = ["Su", "M", "Tu", "W", "Th", "F", "Sa"];
+
+
+
+function IcalToUCSC(days: string[]) {
+    return days.map((str, i) => {
+        let index = iCalDates.indexOf(str);
+        return UCSCDates[index];
+    });
+}
+
+
 export const FetchCourse: ActionCreator<ThunkAction<void, AppState, null, CoursePanelActionTypes>>
     = (courseID: number, quarterID: number) =>
         async (dispatch, getState) => {
@@ -106,6 +121,29 @@ export const FetchCourse: ActionCreator<ThunkAction<void, AppState, null, Course
             try {
                 let { data: course } = await axios.get<Course>("/courses", { params: { courseID, quarterID } });
                 console.log(course);
+                course.meets = course.meets.map(({ days, endTime, loc, startTime }) => {
+                    return {
+                        days: IcalToUCSC(days),
+                        startTime: new Date(startTime),
+                        endTime: new Date(endTime),
+                        loc
+                    }
+                });
+                course.labs.labs = course.labs.labs.map(({ id, meet, sect }) => {
+                    if (meet !== "N/A" && meet !== "TBA") {
+                        meet = {
+                            days: IcalToUCSC(meet.days),
+                            startTime: new Date(meet.startTime),
+                            endTime: new Date(meet.endTime),
+                            loc: meet.loc
+                        }
+                    }
+                    return {
+                        id,
+                        meet,
+                        sect
+                    }
+                });
                 let courseLoaded: CoursePanelActionTypes = {
                     type: ActionTypesCoursePanel.COURSE_LOADED,
                     payload: {

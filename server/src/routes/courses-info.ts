@@ -7,7 +7,7 @@ import { Course } from "../../../shared/types";
 
 const router = Router();
 
-
+let quarterCourses: { [index: number]: { [index: number]: Course } } = {};
 
 const ValidateQuarter: RequestHandler = async (req, res, next) => {
     let queryQuarter = parseInt(req.query["quarterID"] as string);
@@ -26,17 +26,25 @@ router.use(ValidateQuarter);
 
 router.get("/", async (req, res, next) => {
     let courseID = req.query["courseID"] as string;
-    
     let { quarter } = req;
-    let course: Course = null;
+    let courses = quarterCourses[quarter.id];
+    if (courses === undefined) {
+        courses = quarterCourses[quarter.id] = {};
+    }
+
+    let courseIDNum = parseInt(courseID);
+    let course: Course = courses[courseIDNum];
     try {
-        
-        course = await QueryCourse(quarter.id, quarter.keyDates, courseID);
-        console.log(course.fullName);
+
+        if (!course) {
+            course = await QueryCourse(quarter.id, quarter.keyDates, courseID);
+            console.log(course.shortName);
+            courses[course.id] = course;
+        }
         return res.send(course)
     } catch (error) {
         console.log(error);
-        
+
         next(new HttpException(500, `Did not find the course ${courseID}`))
     }
 

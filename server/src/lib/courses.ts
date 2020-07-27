@@ -125,7 +125,8 @@ function ObtainCourseMeetingInfo(meetingPanel: Cheerio, $: CheerioStatic, keyDat
         const tr = trElems[i];
         let [time, loc, instr, meetingDates] = $("td", tr).toArray().map(el => $(el).text());
         instructor = instr;
-
+        loc = /^\s*$/.test(loc) ? "N/A" : loc;
+        
         if (time.trim().length !== 0) {
             let [days, timeSlot] = time.split(" ");
 

@@ -1,27 +1,56 @@
+@import "../../global-styles/color";
+@import "../../global-styles/font";
+
 div.coursePanel {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    p:first-of-type,
-    & > div > span {
-        font-weight: 500;
-    }
-    & > div {
-        margin-bottom: 6px;
+    justify-content: flex-start;
+    position: relative;
+    .exit {
+        position: absolute;
+        right: 9px;
+        width: 2.5rem;
+        height: 2.5rem;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    .sectionDisplay {
-        margin-bottom: 20px;
-        & > div:first-of-type {
-            text-align: left;
+    .courseInfo {
+        p:first-of-type,
+        div div label {
+            font-weight: 500;
+        }
+        div {
+            margin-bottom: 7px;
         }
         > div {
-            font-size: 0.9rem;
-            text-align: left;
+            margin-bottom: 20px;
         }
-        .sectionLabels {
+    }
+
+    .sectionLabels {
+        > div:first-of-type {
+            text-align: left;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            span:first-of-type {
+                font-weight: 500;
+                margin-right: 10px;
+            }
+
+            span:last-of-type {
+                font-size: 0.8rem;
+                color: #929292;
+            }
+        }
+
+        > div:last-of-type {
             display: flex;
             margin-bottom: 5px;
+            font-size: 1rem;
+
             color: #7aa7ff;
             span:nth-child(1) {
                 flex: 0 0 21%;
@@ -33,29 +62,35 @@ div.coursePanel {
                 flex: 1 0 20%;
             }
         }
-        .sectionList {
-            .section {
-                display: flex;
-                padding: 5px 0px;
-                cursor: pointer;
+    }
+    .sectionList {
+        overflow-y: scroll;
 
-                span:nth-child(1) {
-                    flex: 0 0 21%;
-                }
-                span:nth-child(2) {
-                    flex: 0 0 51%;
-                }
-                span:nth-child(3) {
-                    flex: 1 0 20%;
-                }
-                &:hover {
-                    background: #96d8ff;
-                }
-                &.selected {
-                    background: #20a4f3;
-                }
+        .section {
+            display: flex;
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 10px 5px;
+            cursor: pointer;
+
+            span:nth-child(1) {
+                flex: 0 0 21%;
+            }
+            span:nth-child(2) {
+                flex: 0 0 51%;
+            }
+            span:nth-child(3) {
+                flex: 1 0 20%;
+            }
+            &:hover {
+                background: $accent-col;
+            }
+            &.selected {
+                background: #20a4f3;
+                color: $primary-col;
             }
         }
     }
-
+    .btn {
+    }
 }
