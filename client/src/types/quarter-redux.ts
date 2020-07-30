@@ -33,7 +33,7 @@ interface SuccessFetchAvailQuartersAction
 interface FailFetchAvailQuartersAction
     extends Action<ActionTypesQuarters.QUARTERS_FAILED> {
     payload: {
-        errorCode: number,
+        errCode: number,
         errMessage: string
     }
 }
@@ -46,12 +46,12 @@ interface SetShowKeydates
 }
 
 export interface QuartersState {
-    availableQuarters: Quarters,
+    availableQuarters: Quarters | null,
     selectedQuarter: QuarterSeasons,
     fetching: boolean,
     showKeyDates: boolean,
     errMessage: string,
-    errorCode: Number
+    errCode: Number
 }
 
 export type QuarterActionTypes =

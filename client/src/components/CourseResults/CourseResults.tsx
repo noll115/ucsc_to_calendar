@@ -8,10 +8,10 @@ import "./CourseResults.scss"
 
 const mapStateToProps = (state: AppState) => {
     let { availableQuarters, selectedQuarter } = state.quarterState;
-    let quarter = availableQuarters[selectedQuarter];
+    let quarter = availableQuarters ? availableQuarters[selectedQuarter] : null;
     return {
-        courses: quarter?.courses,
-        quarterID: quarter?.id,
+        courses: quarter?.courses || null,
+        quarterID: quarter?.id || null,
         courseSearchState: state.courseSearchState
     };
 }
@@ -66,7 +66,7 @@ const CourseResults: FC<props> = ({ courseSearchState: { cursor, coursesResults,
             {coursesResults ?
                 <ul >
                     {coursesResults.map((str, i) => <Li key={i} course={str} selected={i === cursor} onClick={onClickItem} />)}
-                </ul> 
+                </ul>
                 : <div className="typeHint">Need at least 2 or more characters</div>}
         </div>
     )

@@ -4,6 +4,7 @@ import { QuarterSelect, SlugHeader, CourseSearch } from './components';
 import CoursePanel from './components/CoursePanel/CoursePanel';
 import KeyDatePanel from './components/KeyDatePanel/KeyDatePanel';
 import CoursesSelectedList from './components/CoursesSelectedList/CoursesSelectedList';
+import ErrorDisplay from './components/ErrorDisplay/ErrorDisplay';
 
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
       <div className="container"></div>
       <CoursePanel />
       <KeyDatePanel />
+      <ErrorDisplay />
     </div>
   );
 }

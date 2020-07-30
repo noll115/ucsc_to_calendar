@@ -27,7 +27,7 @@ type reduxProps = ConnectedProps<typeof connected>
 
 
 const QuarterSelect: FC<reduxProps> = ({ FetchQuarters, setQuarter, SetShowKeyDate, quarterState }) => {
-    let { availableQuarters, selectedQuarter, fetching, errMessage, errorCode } = quarterState;
+    let { availableQuarters, selectedQuarter, fetching } = quarterState;
     useEffect(() => {
         FetchQuarters();
     }, [FetchQuarters])
@@ -47,11 +47,12 @@ const QuarterSelect: FC<reduxProps> = ({ FetchQuarters, setQuarter, SetShowKeyDa
             <label className="label">For Quarter</label>
             <span className="quarterSelect" >
                 <SelectMenu<QuarterSeasons>
+                    disabled={!fetching}
                     initialValue={selectedQuarter}
                     options={quarters}
                     onClickOption={onOptionClick}
                 />
-                {!fetching ? <Button onClick={setShowPanel}>Key Dates</Button> : <Loading />}
+                {!fetching ? <Button disabled={!availableQuarters} onClick={setShowPanel}>Key Dates</Button> : <Loading />}
             </span>
         </div >
     )

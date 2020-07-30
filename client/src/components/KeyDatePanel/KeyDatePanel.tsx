@@ -9,9 +9,9 @@ import Modal from '../Modal/Modal';
 
 const mapStateToProps = (state: AppState) => {
     let { availableQuarters, selectedQuarter, showKeyDates } = state.quarterState;
-    let currentQuarter = availableQuarters[selectedQuarter];
+    let currentQuarter = availableQuarters ? availableQuarters[selectedQuarter] || null : null;
     return {
-        currentQuarter: currentQuarter || null,
+        currentQuarter: currentQuarter,
         quarterSeason: selectedQuarter,
         showKeyDates
     }
@@ -28,9 +28,11 @@ type ReduxProps = ConnectedProps<typeof connected>;
 
 const KeyDatePanel: FC<ReduxProps> = ({ currentQuarter, quarterSeason, SetShowKeyDate, showKeyDates }) => {
 
-    if (!currentQuarter || !showKeyDates) {
+    if (!currentQuarter) {
         return null;
     }
+
+
     const HideKeyDate = () => {
         SetShowKeyDate(false);
     }
@@ -49,7 +51,7 @@ const KeyDatePanel: FC<ReduxProps> = ({ currentQuarter, quarterSeason, SetShowKe
 
 
     return (
-        <Modal styleName="keyDataInfo">
+        <Modal styleName="keyDataInfo" show={showKeyDates}>
             <div>{`${(quarterSeason as string).charAt(0).toUpperCase() + (quarterSeason as string).slice(1)} ${year}`}</div>
             <div>
                 <p>-Instruction-</p>

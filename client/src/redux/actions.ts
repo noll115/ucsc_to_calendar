@@ -10,7 +10,7 @@ import { CoursePanelActionTypes, ActionTypesCoursePanel } from "src/types/course
 import { CourseSearchActionTypes, ActionTypesCourseSearch } from "src/types/courseSearch-redux";
 
 
-export function addCourse(course: CourseAdded, quarter: QuarterSeasons, isNew: boolean): CalendarActionTypes {
+export function AddCourse(course: CourseAdded, quarter: QuarterSeasons, isNew: boolean): CalendarActionTypes {
     return {
         type: ActionTypesCalendar.Add_COURSE,
         payload: {
@@ -71,21 +71,29 @@ export const FetchQuarters: ActionCreator<ThunkAction<void, AppState, null, Quar
                 }
                 dispatch(quartersAction);
             } catch (err) {
+
                 let res = err as AxiosError;
                 console.log(res.response);
                 if (res.response) {
-                    dispatch({
-                        type: ActionTypesQuarters.QUARTERS_FAILED, payload: {
-                            errorCode: res.response.data.status, errMessage: res.response.data.msg
-                        }
-                    });
-                } else {
-                    dispatch({
-                        type: ActionTypesQuarters.QUARTERS_FAILED, payload: {
-                            errorCode: 500, errMessage: "Something went wrong!"
-                        }
-                    });
+
+                    let { data } = res.response;
+                    if (typeof data === "object") {
+                        return dispatch({
+                            type: ActionTypesQuarters.QUARTERS_FAILED,
+                            payload: {
+                                errCode: res.response.data.status,
+                                errMessage: res.response.data.msg
+                            }
+                        });
+                    }
                 }
+                dispatch({
+                    type: ActionTypesQuarters.QUARTERS_FAILED,
+                    payload: {
+                        errCode: 500,
+                        errMessage: "Can't connect to server!"
+                    }
+                });
             }
         }
 
@@ -155,18 +163,22 @@ export const FetchCourse: ActionCreator<ThunkAction<void, AppState, null, Course
                 let res = err as AxiosError;
                 console.log(res.response);
                 if (res.response) {
-                    dispatch({
-                        type: ActionTypesCoursePanel.COURSE_FAILED, payload: {
-                            errorCode: res.response.data.status, errMessage: res.response.data.msg
-                        }
-                    })
-                } else {
-                    dispatch({
-                        type: ActionTypesCoursePanel.COURSE_FAILED, payload: {
-                            errorCode: 500, errMessage: "Something went wrong!"
-                        }
-                    });
+                    let { data } = res.response;
+
+                    if (typeof data === "object") {
+                        return dispatch({
+                            type: ActionTypesCoursePanel.COURSE_FAILED, payload: {
+                                errCode: data.status, errMessage: data.msg
+                            }
+                        })
+                    }
                 }
+                dispatch({
+                    type: ActionTypesCoursePanel.COURSE_FAILED, payload: {
+                        errCode: 500, errMessage: "Can't connect to server!"
+                    }
+                });
+
             }
 
         }

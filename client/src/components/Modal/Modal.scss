@@ -11,7 +11,23 @@
     height: 100%;
     top: 0;
     left: 0;
-
+    &-appear{
+        opacity: 0;
+    }
+    &-enter{
+        opacity: 0;
+    }
+    &-enter-active{
+        opacity:1;
+        transition:opacity 300ms linear;
+    }
+    &-exit{
+        opacity:1;
+    }
+    &-exit-active{
+        opacity:0;
+        transition:opacity 300ms linear;
+    }
 }
 
 .modal{

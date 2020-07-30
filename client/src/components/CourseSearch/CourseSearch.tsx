@@ -9,7 +9,8 @@ import CoursePanel from '../CoursePanel/CoursePanel'
 const mapStateToProps = (state: AppState) => {
     let { selectedQuarter } = state.quarterState;
     let { coursesResults } = state.courseSearchState;
-    let quarter = state.quarterState.availableQuarters[selectedQuarter];
+    let { availableQuarters } = state.quarterState;
+    let quarter = availableQuarters ? availableQuarters[selectedQuarter] || null : null;
     return {
         courses: quarter ? quarter.courses : {},
         quarterID: quarter?.id,
@@ -161,8 +162,8 @@ const CourseSearch: FC<reduxProps> = ({ FetchCourse, CursorDown, CursorUp, SetRe
             <p className="hint">e.g cse, cse 3, cse 3 - 01</p>
             <div className="courseInput" ref={courseInputRef}>
                 <i className="fas fa-search" onClick={() => inputRef.current?.focus()}></i>
-                <input type="text" ref={inputRef} name="courseInput" onKeyDown={handleKeyDown} onChange={onChange} id="courseInput" maxLength={20} />
-                <CourseResults />
+                <input type="text" disabled={quarterID === undefined} ref={inputRef} name="courseInput" onKeyDown={handleKeyDown} onChange={onChange} id="courseInput" maxLength={20} />
+                {quarterID ? <CourseResults /> : null}
             </div>
         </div>
     )

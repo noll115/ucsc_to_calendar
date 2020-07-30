@@ -10,7 +10,8 @@ export interface Option<T> {
 interface MenuProps<T> {
     initialValue: T,
     options: Option<T>[]
-    onClickOption: (arg: T) => void
+    onClickOption: (arg: T) => void,
+    disabled?: boolean
 }
 
 interface OptionProps<T> {
@@ -26,7 +27,7 @@ function SelectMenuOption<T>({ option: { value, label }, optionAction }: OptionP
     );
 }
 
-function SelectMenu<T>({ initialValue, options, onClickOption }: MenuProps<T>): ReactElement<MenuProps<T>> {
+function SelectMenu<T>({ initialValue, options, disabled, onClickOption }: MenuProps<T>): ReactElement<MenuProps<T>> {
     let [dropDownActive, setDropDownActive] = useState(false);
 
     const toggleDropDown = () => setDropDownActive(!dropDownActive);
@@ -37,7 +38,7 @@ function SelectMenu<T>({ initialValue, options, onClickOption }: MenuProps<T>): 
     let initialOption = options.find(op => op.value === initialValue);
     let leftOverOptions = options.filter(op => op.value !== initialValue);
     return (
-        <span onClick={toggleDropDown} className={`dropdown dropdown-${dropDownActive ? 'open' : 'closed'}`}>
+        <span onClick={!disabled ? toggleDropDown : undefined} className={`dropdown ${disabled ? "disabled" : ""} dropdown-${dropDownActive ? 'open' : 'closed'}`}>
             <span className="option-chosen" ><span>{initialOption?.label}</span> <i className="fas fa-chevron-down"></i>
             </span>
             <ul className="options" >

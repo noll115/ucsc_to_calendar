@@ -1,0 +1,57 @@
+@import "../../global-styles/font";
+
+.errorDisplay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 10vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    opacity: 0;
+    display: none;
+    &-enter {
+        display: flex;
+        opacity: 0;
+    }
+    &-enter-done {
+        opacity: 1;
+        transition: opacity 300ms;
+    }
+
+    &-exit {
+        opacity: 1;
+    }
+    &-exit-active {
+        opacity: 0;
+        transition: opacity 300ms;
+    }
+    &-exit-done {
+        opacity: 0;
+        display: none;
+    }
+
+    > div {
+        background: #ff8381;
+        height: 90%;
+        border-radius: 14px;
+        width: 90%;
+        box-shadow: 1px 2px #0000000c;
+        display: flex;
+        align-items: center;
+        span {
+            display: inline-block;
+            text-align: center;
+            width: 70%;
+            font-size: 1.2rem;
+        }
+        span:nth-child(1) {
+            width: 30%;
+            font-family: $sans;
+            font-weight: 600;
+            font-size: 1.8rem;
+        }
+    }
+}

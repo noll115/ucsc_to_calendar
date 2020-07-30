@@ -19,7 +19,7 @@ export const calendarReducer: Reducer<CalendarState, CalendarActionTypes>
         switch (action.type) {
             case ActionTypesCalendar.Add_COURSE:
                 let { newCourse, isNew } = action.payload;
-                
+
                 let prevCoursesAdded = prevState.calendars[action.payload.quarter];
                 if (!isNew) {
                     prevCoursesAdded = prevCoursesAdded.filter(({ course }) => course.id !== newCourse.course.id)
@@ -33,11 +33,12 @@ export const calendarReducer: Reducer<CalendarState, CalendarActionTypes>
             case ActionTypesCalendar.REMOVE_COURSE:
                 let { courseID, quarter } = action.payload
                 let prevCalendar = prevState.calendars[quarter];
+
                 let newCalendar = prevCalendar.filter(({ course }) => course.id !== courseID);
                 return {
                     calendars: {
-                        [quarter]: newCalendar,
-                        ...prevState.calendars
+                        ...prevState.calendars,
+                        [quarter]: newCalendar
                     }
                 }
             default:
@@ -46,12 +47,12 @@ export const calendarReducer: Reducer<CalendarState, CalendarActionTypes>
     }
 
 const initialQuarterState: QuartersState = {
-    availableQuarters: {},
+    availableQuarters: null,
     selectedQuarter: "fall",
     fetching: false,
     showKeyDates: false,
     errMessage: "",
-    errorCode: 0
+    errCode: 0
 }
 
 export const quarterReducer: Reducer<QuartersState, QuarterActionTypes>
@@ -98,7 +99,7 @@ const initialCoursePanelState: CoursePanelState = {
     courseCache: {},
     showPanel: false,
     errMessage: "",
-    errorCode: 0
+    errCode: 0
 }
 
 
@@ -107,7 +108,7 @@ export const coursePanelReducer: Reducer<CoursePanelState, CoursePanelActionType
     = (prevState = initialCoursePanelState, action) => {
         switch (action.type) {
             case ActionTypesCoursePanel.CLOSE_PANEL:
-                return { ...prevState, showPanel: false, fetching: false, currentCourseViewing: null };
+                return { ...prevState, showPanel: false, fetching: false };
             case ActionTypesCoursePanel.FETCH_COURSE:
                 return { ...prevState, showPanel: true, fetching: true };
             case ActionTypesCoursePanel.COURSE_LOADED:

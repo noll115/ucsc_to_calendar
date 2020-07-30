@@ -25,7 +25,7 @@ interface CourseFailedAction
     extends Action<ActionTypesCoursePanel.COURSE_FAILED> {
     payload: {
         errMessage: string,
-        errorCode: number
+        errCode: number
     }
 }
 
@@ -42,7 +42,7 @@ export interface CoursePanelState {
     fetching: boolean
     showPanel: boolean,
     errMessage: string,
-    errorCode: number
+    errCode: number
 }
 
 

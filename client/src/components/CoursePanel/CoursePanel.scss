@@ -6,6 +6,8 @@ div.coursePanel {
     flex-direction: column;
     justify-content: flex-start;
     position: relative;
+
+
     .exit {
         position: absolute;
         right: 9px;
@@ -16,7 +18,6 @@ div.coursePanel {
         align-items: center;
         justify-content: center;
     }
-
     .courseInfo {
         p:first-of-type,
         div div label {

@@ -1,21 +1,26 @@
-import React, { FC, Fragment as div } from 'react'
+import React, { FC, Fragment as div, MouseEvent, useEffect } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from '../../redux';
-import { removeCourse } from '../../redux/actions'
+import { removeCourse, FetchCourse } from '../../redux/actions'
 import "./CoursesSelectedList.scss"
+import { TransitionGroup, CSSTransition } from 'react-transition-group';
 
 
 const mapStateToProps = (state: AppState) => {
     let { selectedQuarter } = state.quarterState;
     let courses = state.calendarState.calendars[selectedQuarter];
+    let { availableQuarters } = state.quarterState;
+    let currentQuarter = availableQuarters ? availableQuarters[selectedQuarter] || null : null;
     return {
         courses,
-        currentQuarterSeason: state.quarterState.selectedQuarter
+        currentQuarter,
+        quarterSeason: selectedQuarter
     }
 }
 
 const mapDispatchToProps = {
-    removeCourse
+    removeCourse,
+    FetchCourse
 }
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -25,8 +30,10 @@ type reduxProps = ConnectedProps<typeof connector>
 interface Props extends reduxProps {
 }
 
-const CoursesSelectedList: FC<Props> = ({ removeCourse, courses, currentQuarterSeason }) => {
+const CoursesSelectedList: FC<Props> = ({ removeCourse, courses, quarterSeason, currentQuarter, FetchCourse }) => {
     let col = "#A9FFAC";
+
+
     let list = courses.map((courseAdded, i) => {
         let { course, labChosen } = courseAdded;
         let meeting = course.meets.map(({ startTime, endTime }) => {
@@ -39,25 +46,36 @@ const CoursesSelectedList: FC<Props> = ({ removeCourse, courses, currentQuarterS
             return `${startTimeStr} - ${endTimeStr}`
         }).join()
 
-        let removeCourseHandler = () => {
-            removeCourse(course.id, currentQuarterSeason)
+        let removeCourseHandler = (e: MouseEvent) => {
+            removeCourse(course.id, quarterSeason)
+            e.stopPropagation();
         }
         let editCourse = () => {
-
+            FetchCourse(courseAdded.course.id, currentQuarter?.id)
         }
         return (
-            <div key={i} onClick={editCourse} >
-                <span className="color" style={{ background: col }}></span>
-                <span>{`${course.shortName} - ${course.sect}`}</span>
-                <span>{meeting}</span>
-                <button onClick={removeCourseHandler}><i className="fas fa-times "></i></button>
-            </div>
+
+            <CSSTransition
+                key={i}
+                classNames="selectedCourse"
+                timeout={300}
+            >
+                <div className="selectedCourse" onClick={editCourse} >
+                    <span className="color" style={{ background: col }}></span>
+                    <span>{`${course.shortName} - ${course.sect}`}</span>
+                    <span>{meeting}</span>
+                    <button onClick={removeCourseHandler}><i className="fas fa-times"></i></button>
+                </div>
+            </CSSTransition>
         )
-    })
+    });
+
     return (
-        <div className="coursesSelectedList">
+        <div className="coursesSelectedList" style={{maxHeight:`calc(35px + ${list.length * 2.6}rem + ${Math.max(list.length-1,0) * 20}px)`,transition:"max-height 300ms"}}>
             <label className="label" >Classes Selected:</label>
-            {list}
+            <TransitionGroup  >
+                {list}
+            </TransitionGroup>
         </div>
     )
 }
