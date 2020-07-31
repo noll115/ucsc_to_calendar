@@ -1,10 +1,6 @@
 import React from 'react';
 import './App.scss';
-import { QuarterSelect, SlugHeader, CourseSearch } from './components';
-import CoursePanel from './components/CoursePanel/CoursePanel';
-import KeyDatePanel from './components/KeyDatePanel/KeyDatePanel';
-import CoursesSelectedList from './components/CoursesSelectedList/CoursesSelectedList';
-import ErrorDisplay from './components/ErrorDisplay/ErrorDisplay';
+import { QuarterSelect, SlugHeader, CourseSearch,CoursePanel,KeyDatePanel,CoursesSelectedList,ErrorDisplay } from './components';
 
 
 function App() {

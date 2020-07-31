@@ -5,7 +5,7 @@ import ErrorDisplay from "./ErrorDisplay/ErrorDisplay"
 import Button from "./Button/Button";
 import CoursePanel from "./CoursePanel/CoursePanel";
 import CourseResults from "./CourseResults/CourseResults";
-import CourseSelectedList from "./CoursesSelectedList/CoursesSelectedList";
+import CoursesSelectedList from "./CoursesSelectedList/CoursesSelectedList";
 import Loading from "./Loading/Loading";
 import KeyDatePanel from "./KeyDatePanel/KeyDatePanel";
 import Modal from "./Modal/Modal";
@@ -19,7 +19,7 @@ export {
     CoursePanel,
     Button,
     CourseResults,
-    CourseSelectedList,
+    CoursesSelectedList,
     Loading,
     KeyDatePanel,
     Modal,
