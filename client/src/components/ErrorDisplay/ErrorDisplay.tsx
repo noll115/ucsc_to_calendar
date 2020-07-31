@@ -1,4 +1,4 @@
-import React, { FC, useEffect, Fragment, useState } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from 'src/redux'
 import { CSSTransition } from 'react-transition-group'
@@ -39,7 +39,7 @@ const ErrorDisplay: FC<ReduxProps> = ({ panelError, quarterError }) => {
             setShowError(true);
         }
 
-    }, [setShowError, quarterError.errMessage, panelError.errMessage])
+    }, [showError, setShowError, quarterError.errMessage, panelError.errMessage])
 
     let errMsg, errCode;
     if (panelError.errMessage !== "") {

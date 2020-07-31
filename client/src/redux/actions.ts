@@ -22,7 +22,7 @@ export function AddCourse(course: CourseAdded, quarter: QuarterSeasons, isNew: b
 }
 
 
-export function removeCourse(courseID: number, quarter: QuarterSeasons): CalendarActionTypes {
+export function RemoveCourse(courseID: number, quarter: QuarterSeasons): CalendarActionTypes {
     return {
         type: ActionTypesCalendar.REMOVE_COURSE,
         payload: {
@@ -32,8 +32,50 @@ export function removeCourse(courseID: number, quarter: QuarterSeasons): Calenda
     }
 }
 
+export function SetCalendars(calendars: { [key in QuarterSeasons]: CourseAdded[] }): CalendarActionTypes {
+    for (const quarterSeason in calendars) {
+        const coursesAdded = calendars[quarterSeason as QuarterSeasons];
+        let coursesLocalized = coursesAdded.map((courseAdded) => {
+            let { course } = courseAdded;
+            course.meets = course.meets.map(({ days, endTime, loc, startTime }) => {
+                return {
+                    days: IcalToUCSC(days),
+                    startTime: new Date(startTime),
+                    endTime: new Date(endTime),
+                    loc
+                }
+            });
+            course.labs.labs = course.labs.labs.map(({ id, meet, sect }) => {
+                if (meet !== "N/A" && meet !== "TBA") {
+                    meet = {
+                        days: IcalToUCSC(meet.days),
+                        startTime: new Date(meet.startTime),
+                        endTime: new Date(meet.endTime),
+                        loc: meet.loc
+                    }
+                }
+                return {
+                    id,
+                    meet,
+                    sect
+                }
+            });
+            return courseAdded;
+        });
+        calendars[quarterSeason as QuarterSeasons] = coursesLocalized;
+    }
 
-export function setQuarter(quarterSeason: QuarterSeasons): QuarterActionTypes {
+
+    return {
+        type: ActionTypesCalendar.SET_CALENDARS,
+        payload: {
+            calendars
+        }
+    }
+}
+
+
+export function SetQuarter(quarterSeason: QuarterSeasons): QuarterActionTypes {
 
     return {
         type: ActionTypesQuarters.SELECT_QUARTER,

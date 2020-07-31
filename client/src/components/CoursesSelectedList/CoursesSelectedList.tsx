@@ -1,10 +1,11 @@
 import React, { FC, Fragment as div, MouseEvent, useEffect } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from '../../redux';
-import { removeCourse, FetchCourse } from '../../redux/actions'
-import "./CoursesSelectedList.scss"
+import { RemoveCourse, FetchCourse, SetCalendars } from '../../redux/actions'
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
-
+import { CourseAdded } from 'src/types/calendar-redux';
+import { QuarterSeasons } from '../../../../shared/types';
+import "./CoursesSelectedList.scss"
 
 const mapStateToProps = (state: AppState) => {
     let { selectedQuarter } = state.quarterState;
@@ -19,8 +20,9 @@ const mapStateToProps = (state: AppState) => {
 }
 
 const mapDispatchToProps = {
-    removeCourse,
-    FetchCourse
+    RemoveCourse,
+    FetchCourse,
+    SetCalendars
 }
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -30,12 +32,21 @@ type reduxProps = ConnectedProps<typeof connector>
 interface Props extends reduxProps {
 }
 
-const CoursesSelectedList: FC<Props> = ({ removeCourse, courses, quarterSeason, currentQuarter, FetchCourse }) => {
+const CoursesSelectedList: FC<Props> = ({ RemoveCourse, SetCalendars, courses, quarterSeason, currentQuarter, FetchCourse }) => {
     let col = "#A9FFAC";
+    useEffect(() => {
+        let cacheHit = sessionStorage.getItem("calendars");
+        console.log("s");
+
+        if (cacheHit) {
+            let calendars: { [key in QuarterSeasons]: CourseAdded[] } = JSON.parse(cacheHit);
+            SetCalendars(calendars);
+        }
+    }, [SetCalendars])
 
 
     let list = courses.map((courseAdded, i) => {
-        let { course, labChosen } = courseAdded;
+        let { course } = courseAdded;
         let meeting = course.meets.map(({ startTime, endTime }) => {
             if (startTime === "N/A" && endTime === "N/A") {
                 return "N/A";
@@ -47,7 +58,7 @@ const CoursesSelectedList: FC<Props> = ({ removeCourse, courses, quarterSeason, 
         }).join()
 
         let removeCourseHandler = (e: MouseEvent) => {
-            removeCourse(course.id, quarterSeason)
+            RemoveCourse(course.id, quarterSeason)
             e.stopPropagation();
         }
         let editCourse = () => {
@@ -71,7 +82,7 @@ const CoursesSelectedList: FC<Props> = ({ removeCourse, courses, quarterSeason, 
     });
 
     return (
-        <div className="coursesSelectedList" style={{maxHeight:`calc(35px + ${list.length * 2.6}rem + ${Math.max(list.length-1,0) * 20}px)`,transition:"max-height 300ms"}}>
+        <div className="coursesSelectedList" style={{ maxHeight: `calc(35px + ${list.length * 2.6}rem + ${Math.max(list.length - 1, 0) * 20}px)`, transition: "max-height 300ms" }}>
             <label className="label" >Classes Selected:</label>
             <TransitionGroup  >
                 {list}

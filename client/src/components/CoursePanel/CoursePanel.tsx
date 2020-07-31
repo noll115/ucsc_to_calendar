@@ -2,11 +2,9 @@ import React, { FC, Fragment } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from 'src/redux';
 import { ClosePanel } from "../../redux/actions";
-import Modal from "../Modal/Modal";
-import Button from '../Button/Button';
-import "./CoursePanel.scss";
-import Loading from '../Loading/Loading';
+import { Modal, Button, Loading } from "../index";
 import CourseInfo from './CourseInfo';
+import "./CoursePanel.scss";
 
 
 const mapStateToProps = (state: AppState) => {

@@ -1,10 +1,9 @@
 import React, { FC, ChangeEvent, useRef, useEffect, KeyboardEvent } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from 'src/redux'
-import "./CourseSearch.scss"
-import CourseResults from '../CourseResults/CourseResults'
+import { CourseResults } from '../index'
 import { CursorUp, CursorDown, SetResults, FetchCourse, SetShowResults } from "../../redux/actions";
-import CoursePanel from '../CoursePanel/CoursePanel'
+import "./CourseSearch.scss"
 
 const mapStateToProps = (state: AppState) => {
     let { selectedQuarter } = state.quarterState;

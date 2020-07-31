@@ -1,12 +1,11 @@
 import React, { useEffect, FC } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from '../../redux'
-import SelectMenu, { Option } from "../SelectMenu/SelectMenu"
-import { FetchQuarters, setQuarter, SetShowKeyDate } from "../../redux/actions";
+import { Option } from "../SelectMenu/SelectMenu"
+import { FetchQuarters, SetQuarter, SetShowKeyDate } from "../../redux/actions";
 import { QuarterSeasons } from '../../../../shared/types';
-import Button from "../Button/Button";
+import { Button, Loading, SelectMenu } from "../index";
 import "./QuarterSelect.scss"
-import Loading from '../Loading/Loading';
 
 const mapStateToProps = (state: AppState) => ({
     quarterState: state.quarterState
@@ -14,7 +13,7 @@ const mapStateToProps = (state: AppState) => ({
 
 const mapDispatchToProps = {
     FetchQuarters,
-    setQuarter,
+    setQuarter: SetQuarter,
     SetShowKeyDate
 
 }
@@ -22,8 +21,6 @@ const mapDispatchToProps = {
 const connected = connect(mapStateToProps, mapDispatchToProps);
 
 type reduxProps = ConnectedProps<typeof connected>
-
-
 
 
 const QuarterSelect: FC<reduxProps> = ({ FetchQuarters, setQuarter, SetShowKeyDate, quarterState }) => {
@@ -47,7 +44,7 @@ const QuarterSelect: FC<reduxProps> = ({ FetchQuarters, setQuarter, SetShowKeyDa
             <label className="label">For Quarter</label>
             <span className="quarterSelect" >
                 <SelectMenu<QuarterSeasons>
-                    disabled={!fetching}
+                    disabled={!fetching && availableQuarters === null}
                     initialValue={selectedQuarter}
                     options={quarters}
                     onClickOption={onOptionClick}

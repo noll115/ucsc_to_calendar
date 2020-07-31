@@ -19,28 +19,34 @@ export const calendarReducer: Reducer<CalendarState, CalendarActionTypes>
         switch (action.type) {
             case ActionTypesCalendar.Add_COURSE:
                 let { newCourse, isNew } = action.payload;
-
                 let prevCoursesAdded = prevState.calendars[action.payload.quarter];
                 if (!isNew) {
                     prevCoursesAdded = prevCoursesAdded.filter(({ course }) => course.id !== newCourse.course.id)
                 }
+                let withNewCourse = {
+                    ...prevState.calendars,
+                    [action.payload.quarter]: [...prevCoursesAdded, newCourse]
+                }
+                sessionStorage.setItem("calendars", JSON.stringify(withNewCourse));
                 return {
-                    calendars: {
-                        ...prevState.calendars,
-                        [action.payload.quarter]: [...prevCoursesAdded, newCourse]
-                    }
+                    calendars: withNewCourse
                 };
             case ActionTypesCalendar.REMOVE_COURSE:
                 let { courseID, quarter } = action.payload
                 let prevCalendar = prevState.calendars[quarter];
 
                 let newCalendar = prevCalendar.filter(({ course }) => course.id !== courseID);
-                return {
-                    calendars: {
-                        ...prevState.calendars,
-                        [quarter]: newCalendar
-                    }
+                let removedCourse = {
+                    ...prevState.calendars,
+                    [quarter]: newCalendar
                 }
+                sessionStorage.setItem("calendars", JSON.stringify(removedCourse));
+                return {
+                    calendars: removedCourse
+                }
+            case ActionTypesCalendar.SET_CALENDARS:
+                let { calendars } = action.payload;
+                return { calendars: calendars };
             default:
                 return prevState;
         }

@@ -1,7 +1,7 @@
 
 import React, { FC } from 'react'
-import "./Modal.scss"
 import { CSSTransition } from 'react-transition-group';
+import "./Modal.scss"
 
 interface Props {
     styleName?: string,

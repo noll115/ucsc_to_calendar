@@ -3,7 +3,7 @@ import { Meeting, Course } from '../../../../shared/types';
 import { ClosePanel, AddCourse } from "../../redux/actions";
 import { AppState } from 'src/redux';
 import { ConnectedProps, connect } from 'react-redux';
-import Button from 'src/components/Button/Button';
+import { Button } from '../index';
 
 
 
@@ -23,15 +23,6 @@ const mapDispatchToProps = {
 }
 
 
-const FullDays: Record<string, string> = {
-    SU: "Sunday",
-    MO: "Monday",
-    TU: "Tuesday",
-    WE: "Wednesday",
-    TH: "Thursday",
-    FR: "Friday",
-    SA: "Saturday"
-}
 const connected = connect(mapStateToProps, mapDispatchToProps);
 
 type ReduxProps = ConnectedProps<typeof connected>;
@@ -51,11 +42,11 @@ const CourseInfo: FC<CourseInfoProps> = ({ quarterSeason, currCourseViewing, cou
             setSelectedIndex(courseInCalendar.labChosen);
         else
             setSelectedIndex(-1);
-    }, [currCourseViewing, setSelectedIndex,courseInCalendar])
+    }, [currCourseViewing, setSelectedIndex, courseInCalendar])
 
 
     let { fullName, id, inst, labs: { labs, type: labType }, meets, sect, shortName, type } = currCourseViewing;
-    let days = meets.map(m => m.days.map(day => FullDays[day])).join();
+    let days = meets.map(m => m.days).join();
 
 
 
@@ -108,7 +99,7 @@ const CourseInfo: FC<CourseInfoProps> = ({ quarterSeason, currCourseViewing, cou
         <Fragment>
             <div className="courseInfo">
                 <div>
-                    <p>{`${shortName} - ${sect}`}</p>
+                    <p>{`${shortName} - ${sect}  ${type}`}</p>
                 </div>
                 <div>
                     <div><label>Course Name:</label> <div>{fullName}</div></div>

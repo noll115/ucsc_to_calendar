@@ -2,7 +2,7 @@ import React, { FC } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from 'src/redux'
 import { SetShowKeyDate } from "../../redux/actions";
-import Button from "../Button/Button";
+import { Button } from "../index";
 
 import "./KeyDatePanel.scss"
 import Modal from '../Modal/Modal';
