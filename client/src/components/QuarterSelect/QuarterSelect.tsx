@@ -13,7 +13,7 @@ const mapStateToProps = (state: AppState) => ({
 
 const mapDispatchToProps = {
     FetchQuarters,
-    setQuarter: SetQuarter,
+    SetQuarter,
     SetShowKeyDate
 
 }
@@ -23,7 +23,7 @@ const connected = connect(mapStateToProps, mapDispatchToProps);
 type reduxProps = ConnectedProps<typeof connected>
 
 
-const QuarterSelect: FC<reduxProps> = ({ FetchQuarters, setQuarter, SetShowKeyDate, quarterState }) => {
+const QuarterSelect: FC<reduxProps> = ({ FetchQuarters, SetQuarter, SetShowKeyDate, quarterState }) => {
     let { availableQuarters, selectedQuarter, fetching } = quarterState;
     useEffect(() => {
         FetchQuarters();
@@ -35,7 +35,7 @@ const QuarterSelect: FC<reduxProps> = ({ FetchQuarters, setQuarter, SetShowKeyDa
         quarters.push({ value: season as QuarterSeasons, label: `${season.charAt(0).toUpperCase() + season.slice(1)} ${quarter?.year}` })
     }
 
-    let onOptionClick = (season: QuarterSeasons) => { setQuarter(season) }
+    let onOptionClick = (season: QuarterSeasons) => { SetQuarter(season) }
     let setShowPanel = () => {
         SetShowKeyDate(true)
     };
