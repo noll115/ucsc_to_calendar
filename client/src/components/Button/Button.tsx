@@ -9,7 +9,7 @@ interface Props {
 
 const Button: FC<Props> = ({ children, onClick, disabled, additionalClasses }) => {
     return (
-        <button className={`btn ${additionalClasses}`} onClick={onClick} disabled={disabled} >{children}</button>
+        <button className={`btn ${additionalClasses || ""}`} onClick={onClick} disabled={disabled} >{children}</button>
     )
 }
 

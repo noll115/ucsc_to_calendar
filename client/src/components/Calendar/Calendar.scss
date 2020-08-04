@@ -1,0 +1,77 @@
+.calendarComponent {
+    .calendar {
+        display: grid;
+        position: relative;
+        grid-template-columns: 12% 1fr;
+        grid-template-rows: 60px 1fr;
+        grid-template-areas:
+            "days days"
+            "times content";
+        .days {
+            grid-area: days;
+            grid-template-columns: 12% repeat(5, 1fr);
+            display: grid;
+            place-items: center;
+            font-weight: bold;
+            font-size: 22px;
+            color: #4e4e4e;
+        }
+        .times {
+            position: absolute;
+            grid-area: times;
+            display: grid;
+            grid-template-rows: repeat(16, 50px);
+            justify-items: flex-end;
+            div{
+                position: relative;
+                top: -0.6rem;
+                right: 10px;
+            }
+        }
+
+        .content {
+            grid-area: content;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(30, 25px);
+            .border {
+                position: relative;
+                right: -1px;
+                grid-row: 1 / -1;
+                grid-column-start: 1;
+                width: 1px;
+                background: black;
+                justify-self: flex-end;
+                &:nth-child(2) {
+                    justify-self: flex-start;
+                    left: -1px;
+                }
+
+                @for $i from 3 through 6 {
+                    &:nth-child(#{$i}) {
+                        grid-column-start: #{$i - 1};
+                    }
+                }
+            }
+            .crossBorder {
+                position: relative;
+                grid-column: 1/-1;
+                grid-row-start: 1;
+                height: 1px;
+                align-self: flex-end;
+                bottom: -1px;
+                background: black;
+                &:nth-child(22) {
+                    align-self: flex-start;
+                    top: 0px;
+                }
+                @for $i from 0 through 15 {
+                    $child: 6 + $i;
+                    &:nth-child(#{$child}) {
+                        grid-row-start: #{2 * $i};
+                    }
+                }
+            }
+        }
+    }
+}

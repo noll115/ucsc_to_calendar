@@ -10,6 +10,7 @@ import Loading from "./Loading/Loading";
 import KeyDatePanel from "./KeyDatePanel/KeyDatePanel";
 import Modal from "./Modal/Modal";
 import SelectMenu from "./SelectMenu/SelectMenu";
+import Calendar from "./Calendar/Calendar";
 
 export {
     SlugHeader,
@@ -23,5 +24,6 @@ export {
     Loading,
     KeyDatePanel,
     Modal,
-    SelectMenu
+    SelectMenu,
+    Calendar
 };

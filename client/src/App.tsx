@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.scss';
-import { QuarterSelect, SlugHeader, CourseSearch,CoursePanel,KeyDatePanel,CoursesSelectedList,ErrorDisplay } from './components';
+import { QuarterSelect, SlugHeader, CourseSearch, CoursePanel, KeyDatePanel, CoursesSelectedList, ErrorDisplay, Calendar } from './components';
 
 
 function App() {
@@ -14,7 +14,9 @@ function App() {
       <div className="container">
         <CoursesSelectedList />
       </div>
-      <div className="container"></div>
+      <div className="container">
+        <Calendar />
+      </div>
       <CoursePanel />
       <KeyDatePanel />
       <ErrorDisplay />
